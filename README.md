@@ -13,7 +13,8 @@ cargo test
 ````
 
 ## Benchmarking
-
+The benchmark simulates connected clients ``c`` making ``n`` sets commands on merkle storage,
+the benchmark show the number of set commands that has been committed to storage 
 ````shell script
 cd benchmark
 ````
