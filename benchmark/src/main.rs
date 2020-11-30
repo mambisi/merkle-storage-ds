@@ -10,7 +10,9 @@ use timer;
 use chrono::Duration;
 
 fn main() {
+    // simulate parallel connected clients
     let c = 100;
+    // simulate set commands by clients
     let n = 50000;
     let mut vec = vec![vec!["data".to_string(), "a".to_string(), "x".to_string()]; c];
     let db = Arc::new(RwLock::new(DB::new()));

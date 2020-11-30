@@ -14,14 +14,6 @@ pub mod prelude {
     pub use crate::database::*;
     pub use crate::merkle_storage::*;
     pub use crate::db_iterator::*;
-}
-
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+    pub use crate::codec::*;
+    pub use crate::ivec::IVec;
 }

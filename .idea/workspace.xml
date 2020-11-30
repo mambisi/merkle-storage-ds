@@ -6,15 +6,6 @@
         <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
         <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
       </path>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
     </expand>
     <select />
   </component>
@@ -31,19 +22,13 @@
     <cargoProject FILE="$PROJECT_DIR$/benchmark/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="db4c3393-57d5-41df-a374-f80cd2c806dc" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/merkle-storage-ds.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/ivec.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/merkle_storage_2.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+    <list default="true" id="db4c3393-57d5-41df-a374-f80cd2c806dc" name="Default Changelist" comment="Initial Commit">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/codec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/codec.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/database.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db_iterator.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db_iterator.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ivec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ivec.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,6 +63,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="settings.editor.selected.configurable" value="language.rust" />
   </component>
@@ -159,8 +145,16 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1606686136152</updated>
-      <workItem from="1606686138504" duration="5593000" />
+      <workItem from="1606686138504" duration="8319000" />
     </task>
+    <task id="LOCAL-00001" summary="Initial Commit">
+      <created>1606693882397</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1606693882397</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -177,43 +171,47 @@
       </map>
     </option>
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial Commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial Commit" />
+  </component>
   <component name="WindowStateProjectService">
     <state x="304" y="187" width="1071" height="748" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606693325904">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state x="304" y="187" width="1071" height="748" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1606693325904" />
-    <state width="1636" height="364" key="GridCell.Tab.0.bottom" timestamp="1606693601813">
+    <state width="1636" height="364" key="GridCell.Tab.0.bottom" timestamp="1606723974864">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601813" />
-    <state width="1636" height="364" key="GridCell.Tab.0.center" timestamp="1606693601811">
+    <state width="1636" height="364" key="GridCell.Tab.0.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974864" />
+    <state width="1636" height="364" key="GridCell.Tab.0.center" timestamp="1606723974863">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.center/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601811" />
-    <state width="1636" height="364" key="GridCell.Tab.0.left" timestamp="1606693601810">
+    <state width="1636" height="364" key="GridCell.Tab.0.center/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974863" />
+    <state width="1636" height="364" key="GridCell.Tab.0.left" timestamp="1606723974862">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.left/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601810" />
-    <state width="1636" height="364" key="GridCell.Tab.0.right" timestamp="1606693601812">
+    <state width="1636" height="364" key="GridCell.Tab.0.left/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974862" />
+    <state width="1636" height="364" key="GridCell.Tab.0.right" timestamp="1606723974863">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.right/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601812" />
-    <state width="1636" height="364" key="GridCell.Tab.1.bottom" timestamp="1606693601696">
+    <state width="1636" height="364" key="GridCell.Tab.0.right/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974863" />
+    <state width="1636" height="364" key="GridCell.Tab.1.bottom" timestamp="1606723974865">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601696" />
-    <state width="1636" height="364" key="GridCell.Tab.1.center" timestamp="1606693601695">
+    <state width="1636" height="364" key="GridCell.Tab.1.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974865" />
+    <state width="1636" height="364" key="GridCell.Tab.1.center" timestamp="1606723974864">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.center/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601695" />
-    <state width="1636" height="364" key="GridCell.Tab.1.left" timestamp="1606693601694">
+    <state width="1636" height="364" key="GridCell.Tab.1.center/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974864" />
+    <state width="1636" height="364" key="GridCell.Tab.1.left" timestamp="1606723974864">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.left/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601694" />
-    <state width="1636" height="364" key="GridCell.Tab.1.right" timestamp="1606693601695">
+    <state width="1636" height="364" key="GridCell.Tab.1.left/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974864" />
+    <state width="1636" height="364" key="GridCell.Tab.1.right" timestamp="1606723974865">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.right/0.0.1680.1050@0.0.1680.1050" timestamp="1606693601695" />
+    <state width="1636" height="364" key="GridCell.Tab.1.right/0.0.1680.1050@0.0.1680.1050" timestamp="1606723974865" />
     <state x="379" y="164" key="SettingsEditor" timestamp="1606687785042">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
