@@ -6,7 +6,7 @@ use crate::db_iterator;
 use std::collections::{HashMap, BTreeMap};
 use crate::db_iterator::{DBIterator, DBIterationHandler};
 use crate::ivec::IVec;
-
+use patricia_tree::PatriciaMap;
 
 #[derive(Debug, Default, Clone)]
 pub struct Batch {
@@ -154,17 +154,14 @@ impl DB {
     }
 
     pub(crate) fn apply_batch(&mut self, batch: Batch) {
-        self.inner.extend(batch.writes.iter().map(|(k,v)|{
-
+        batch.writes.iter().for_each(|(k,v)| {
             match v {
-                None => {
-                    (k.clone(),IVec::default())
-                }
+                None => {}
                 Some(v) => {
-                    (k.clone(),v.clone())
+                    self.inner.insert(k.clone(),v.clone());
                 }
-            }
-        }))
+            };
+        });
     }
 }
 

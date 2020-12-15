@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 merkle = { path = "../merkle" }
-sled = {version = "0.34.4", features=["compression"]}
+sled = { version = "0.34.4", features = ["compression"] }
 rayon = "1.5.0"
 rand = "0.7.3"
 chrono = "0.4"

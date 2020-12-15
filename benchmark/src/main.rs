@@ -19,22 +19,28 @@ use std::convert::TryInto;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut storage = MerkleStorage::new(Arc::new(RwLock::new(DB::new())));
     //env!("BASE_URL")
-    let base_url = "http://127.0.0.1:18732";
+    let base_url = "http://46.101.190.161:18732";
 
     let blocks_url = format!("{}/dev/chains/main/blocks", base_url);
     let mut blocks = reqwest::get(&blocks_url)
         .await?
         .json::<Vec<Value>>()
         .await?;
-    blocks.reverse();
+    //blocks.reverse();
     for block in &blocks {
         let block = block.as_object().unwrap();
-        let block_hash = block.get("hash").unwrap();
-        let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", base_url, block_hash.as_str().unwrap());
+        let block_hash = block.get("hash").unwrap().as_str();
+        let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", base_url, block_hash.unwrap());
         let mut messages = reqwest::get(&actions_url)
             .await?
             .json::<Vec<ContextActionJson>>()
             .await?;
+
+        messages.reverse();
+
+        if messages.len() > 0 {
+            println!("{:?}", messages.len())
+        }
 
         for msg in &messages {
             match &msg.action {
@@ -61,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let date = *date as u64;
                     let hash = storage.commit(date, author.to_owned(), message.to_owned()).unwrap();
                     let commit_hash = hash[..].to_vec();
-                    println!("context hash{} commit_hash{}", HashType::ContextHash.bytes_to_string(new_context_hash), HashType::ContextHash.bytes_to_string(&commit_hash));
+                    println!("context hash: {} commit_hash: {}", HashType::ContextHash.bytes_to_string(new_context_hash), HashType::ContextHash.bytes_to_string(&commit_hash));
                     assert_eq!(&commit_hash, new_context_hash,
                                "Invalid context_hash for block: {}, expected: {}, but was: {}",
                                HashType::BlockHash.bytes_to_string(block_hash),

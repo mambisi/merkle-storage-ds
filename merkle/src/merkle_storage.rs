@@ -45,7 +45,7 @@
 use std::hash::Hash;
 use serde::Deserialize;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap};
 use im::OrdMap;
 use failure::Fail;
 use std::sync::{Arc, RwLock};
@@ -57,11 +57,25 @@ use crate::codec::BincodeEncoded;
 use crate::schema::KeyValueSchema;
 use crate::database::{KeyValueStoreWithSchema, Batch, DB};
 use crate::database::DBError;
+use blake2::digest::{Update, VariableOutput};
+use blake2::VarBlake2b;
+use std::array::TryFromSliceError;
+
 const HASH_LEN: usize = 32;
 
 pub type ContextKey = Vec<String>;
 pub type ContextValue = Vec<u8>;
 pub type EntryHash = [u8; HASH_LEN];
+
+// Tree in String form needed for JSON RPCs
+pub type StringTree = BTreeMap<String, StringTreeEntry>;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum StringTreeEntry {
+    Tree(StringTree),
+    Blob(String),
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 enum NodeKind {
@@ -96,17 +110,19 @@ enum Entry {
 pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + Send;
 
 pub struct MerkleStorage {
+    /// tree with current staging area (currently checked out context)
     current_stage_tree: Option<Tree>,
     db: Arc<RwLock<MerkleStorageKV>>,
+    /// all entries in current staging area
     staged: HashMap<EntryHash, Entry>,
-    last_commit: Option<Commit>,
+    last_commit_hash: Option<EntryHash>,
     map_stats: MerkleMapStats,
+    /// divide this by the next field to get avg time spent in _set
     cumul_set_exec_time: f64,
-    // divide this by the next field to get avg time spent in _set
     set_exec_times: u64,
-    set_exec_times_to_discard: u64, // first N measurements to discard
+    /// first N measurements to discard
+    set_exec_times_to_discard: u64,
 }
-
 #[derive(Debug, Fail)]
 pub enum MerkleError {
     /// External libs errors
@@ -125,6 +141,8 @@ pub enum MerkleError {
     FoundUnexpectedStructure { sought: String, found: String },
     #[fail(display = "Entry not found! Hash={}", hash)]
     EntryNotFound { hash: String },
+    #[fail(display = "Failed to convert hash to array: {}", error)]
+    HashConversionError { error: TryFromSliceError },
 
     /// Wrong user input errors
     #[fail(display = "No value under key {:?}.", key)]
@@ -142,6 +160,9 @@ impl From<bincode::Error> for MerkleError {
     fn from(error: bincode::Error) -> Self { MerkleError::SerializationError { error } }
 }
 
+impl From<TryFromSliceError> for MerkleError {
+    fn from(error: TryFromSliceError) -> Self { MerkleError::HashConversionError { error } }
+}
 #[derive(Serialize, Debug, Clone, Copy)]
 pub struct MerkleMapStats {
     staged_area_elems: u64,
@@ -177,18 +198,17 @@ impl MerkleStorage {
             db,
             staged: HashMap::new(),
             current_stage_tree: None,
-            last_commit: None,
+            last_commit_hash: None,
             map_stats: MerkleMapStats { staged_area_elems: 0, current_tree_elems: 0 },
             cumul_set_exec_time: 0.0,
             set_exec_times: 0,
             set_exec_times_to_discard: 20,
         }
     }
-
-    /// Get value. Staging area is checked first, then last (checked out) commit.
+    /// Get value from current staged root
     pub fn get(&mut self, key: &ContextKey) -> Result<ContextValue, MerkleError> {
         let root = &self.get_staged_root()?;
-        let root_hash = self.hash_tree(&root);
+        let root_hash = self.hash_tree(&root)?;
 
         self.get_from_tree(&root_hash, key)
     }
@@ -210,13 +230,16 @@ impl MerkleStorage {
         let mut full_path = key.clone();
         let file = full_path.pop().ok_or(MerkleError::KeyEmpty)?;
         let path = full_path;
+        // find tree by path
         let root = self.get_tree(root_hash)?;
         let node = self.find_tree(&root, &path)?;
 
+        // get file node from tree
         let node = match node.get(&file) {
             None => return Err(MerkleError::ValueNotFound { key: self.key_to_string(key) }),
             Some(entry) => entry,
         };
+        // get blob by hash
         match self.get_entry(&node.entry_hash)? {
             Entry::Blob(blob) => Ok(blob),
             _ => Err(MerkleError::ValueIsNotABlob { key: self.key_to_string(key) })
@@ -256,6 +279,56 @@ impl MerkleStorage {
         }
     }
 
+    /// Go recursively down the tree from Entry, build string tree and return it
+    /// (or return hex value if Blob)
+    fn get_context_recursive(&self, path: &str, entry: &Entry) -> Result<StringTreeEntry, MerkleError> {
+        match entry {
+            Entry::Blob(blob) => {
+                Ok(StringTreeEntry::Blob(hex::encode(blob).to_string()))
+            }
+            Entry::Tree(tree) => {
+                // Go through all descendants and gather errors. Remap error if there is a failure
+                // anywhere in the recursion paths. TODO: is revert possible?
+                let mut new_tree = StringTree::new();
+                for (key, child_node) in tree.iter() {
+                    let fullpath = path.to_owned() + "/" + key;
+                    let e = self.get_entry(&child_node.entry_hash)?;
+                    new_tree.insert(key.to_owned(), self.get_context_recursive(&fullpath, &e)?);
+                }
+                Ok(StringTreeEntry::Tree(new_tree))
+            }
+            Entry::Commit(_) => Err(MerkleError::FoundUnexpectedStructure {
+                sought: "Tree/Blob".to_string(),
+                found: "Commit".to_string(),
+            })
+        }
+    }
+
+    /// Get context tree under given prefix in string form (for JSON)
+    pub fn get_context_tree_by_prefix(&self, context_hash: &EntryHash, prefix: &ContextKey) -> Result<StringTree, MerkleError> {
+        let mut out = StringTree::new();
+        let commit = self.get_commit(context_hash)?;
+        let root_tree = self.get_tree(&commit.root_hash)?;
+        let prefixed_tree = self.find_tree(&root_tree, prefix)?;
+
+        for (key, child_node) in prefixed_tree.iter() {
+            let entry = self.get_entry(&child_node.entry_hash)?;
+            let delimiter: &str;
+            if prefix.is_empty() {
+                delimiter = "";
+            } else {
+                delimiter = "/";
+            }
+
+            // construct full path as Tree key is only one chunk of it
+            let fullpath = self.key_to_string(prefix) + delimiter + key;
+            out.insert(key.to_owned(), self.get_context_recursive(&fullpath, &entry)?);
+        }
+
+        Ok(out)
+    }
+
+    /// Construct Vec of all context key-values under given prefix
     pub fn get_key_values_by_prefix(&self, context_hash: &EntryHash, prefix: &ContextKey) -> Result<Option<Vec<(ContextKey, ContextValue)>>, MerkleError> {
         let commit = self.get_commit(context_hash)?;
         let root_tree = self.get_tree(&commit.root_hash)?;
@@ -274,6 +347,7 @@ impl MerkleStorage {
             } else {
                 delimiter = "/";
             }
+            // construct full path as Tree key is only one chunk of it
             let fullpath = self.key_to_string(prefix) + delimiter + key;
             self.get_key_values_from_tree_recursively(&fullpath, &entry, &mut keyvalues)?;
         }
@@ -290,7 +364,7 @@ impl MerkleStorage {
         let commit = self.get_commit(&context_hash)?;
         self.current_stage_tree = Some(self.get_tree(&commit.root_hash)?);
         self.map_stats.current_tree_elems = self.current_stage_tree.as_ref().unwrap().len() as u64;
-        self.last_commit = Some(commit);
+        self.last_commit_hash = Some(*context_hash);
         self.staged = HashMap::new();
         self.map_stats.staged_area_elems = 0;
         Ok(())
@@ -305,9 +379,8 @@ impl MerkleStorage {
                   message: String,
     ) -> Result<EntryHash, MerkleError> {
         let staged_root = self.get_staged_root()?;
-        let staged_root_hash = self.hash_tree(&staged_root);
-        let parent_commit_hash = self.last_commit.as_ref()
-            .map_or(None, |c| Some(self.hash_commit(&c)));
+        let staged_root_hash = self.hash_tree(&staged_root)?;
+        let parent_commit_hash = self.last_commit_hash;
 
         let new_commit = Commit {
             root_hash: staged_root_hash,
@@ -318,12 +391,13 @@ impl MerkleStorage {
         };
         let entry = Entry::Commit(new_commit.clone());
 
-        self.put_to_staging_area(&self.hash_commit(&new_commit), entry.clone());
+        let new_commit_hash = self.hash_commit(&new_commit)?;
+        self.put_to_staging_area(&new_commit_hash, entry.clone());
         self.persist_staged_entry_to_db(&entry)?;
         self.staged = HashMap::new();
         self.map_stats.staged_area_elems = 0;
-        self.last_commit = Some(new_commit.clone());
-        Ok(self.hash_commit(&new_commit))
+        self.last_commit_hash = Some(new_commit_hash);
+        Ok(new_commit_hash)
     }
 
     /// Set key/val to the staging area.
@@ -335,8 +409,10 @@ impl MerkleStorage {
         Ok(())
     }
 
+    /// Walk down the tree to find key, set new value and walk back up recalculating hashes -
+    /// return new top hash of tree. Note: no writes to DB yet
     fn _set(&mut self, root: &Tree, key: &ContextKey, value: &ContextValue) -> Result<EntryHash, MerkleError> {
-        let blob_hash = self.hash_blob(&value);
+        let blob_hash = self.hash_blob(&value)?;
         self.put_to_staging_area(&blob_hash, Entry::Blob(value.clone()));
         let new_node = Node { entry_hash: blob_hash, node_kind: NodeKind::Leaf };
         let instant = Instant::now();
@@ -359,7 +435,7 @@ impl MerkleStorage {
     }
 
     fn _delete(&mut self, root: &Tree, key: &ContextKey) -> Result<EntryHash, MerkleError> {
-        if key.is_empty() { return Ok(self.hash_tree(root)); }
+        if key.is_empty() { return self.hash_tree(root); }
 
         self.compute_new_root_with_change(root, &key, None)
     }
@@ -376,7 +452,7 @@ impl MerkleStorage {
 
     fn _copy(&mut self, root: &Tree, from_key: &ContextKey, to_key: &ContextKey) -> Result<EntryHash, MerkleError> {
         let source_tree = self.find_tree(root, &from_key)?;
-        let source_tree_hash = self.hash_tree(&source_tree);
+        let source_tree_hash = self.hash_tree(&source_tree)?;
         Ok(self.compute_new_root_with_change(
             &root, &to_key, Some(self.get_non_leaf(source_tree_hash)))?)
     }
@@ -394,14 +470,21 @@ impl MerkleStorage {
                                     new_node: Option<Node>,
     ) -> Result<EntryHash, MerkleError> {
         if key.is_empty() {
-            return Ok(new_node.unwrap_or_else(
-                || self.get_non_leaf(self.hash_tree(root))).entry_hash);
+            match new_node {
+                Some(n) => return Ok(n.entry_hash),
+                None => {
+                    let tree_hash = self.hash_tree(root)?;
+                    return Ok(self.get_non_leaf(tree_hash).entry_hash);
+                }
+            }
         }
 
         let last = key.last().unwrap();
         let path = &key[..key.len() - 1];
+        // find tree by path and get new copy of it
         let mut tree = self.find_tree(root, path)?;
 
+        // make the modification at key
         match new_node {
             None => tree.remove(last),
             Some(new_node) => {
@@ -410,16 +493,19 @@ impl MerkleStorage {
         };
 
         if tree.is_empty() {
+            // last element was removed, delete this node
             self.compute_new_root_with_change(root, path, None)
         } else {
-            let new_tree_hash = self.hash_tree(&tree);
+            let new_tree_hash = self.hash_tree(&tree)?;
+            // put new version of the tree to staging area
+            // note: the old version is kept in staging area
             self.put_to_staging_area(&new_tree_hash, Entry::Tree(tree));
             self.compute_new_root_with_change(
                 root, path, Some(self.get_non_leaf(new_tree_hash)))
         }
     }
 
-    /// Find tree by path. Return an empty tree if no tree under this path exists or if a blob
+    /// Find tree by path and return a copy. Return an empty tree if no tree under this path exists or if a blob
     /// (= value) is encountered along the way.
     ///
     /// # Arguments
@@ -427,13 +513,16 @@ impl MerkleStorage {
     /// * `root` - reference to a tree in which we search
     /// * `key` - sought path
     fn find_tree(&self, root: &Tree, key: &[String]) -> Result<Tree, MerkleError> {
+        // terminate recursion if end of path was reached
         if key.is_empty() { return Ok(root.clone()); }
 
+        // first get node at key
         let child_node = match root.get(key.first().unwrap()) {
             Some(hash) => hash,
             None => return Ok(Tree::new()),
         };
 
+        // get entry by hash (from staged area or DB)
         match self.get_entry(&child_node.entry_hash)? {
             Entry::Tree(tree) => {
                 self.find_tree(&tree, &key[1..])
@@ -451,7 +540,7 @@ impl MerkleStorage {
         match &self.current_stage_tree {
             None => {
                 let tree = Tree::new();
-                self.put_to_staging_area(&self.hash_tree(&tree), Entry::Tree(tree.clone()));
+                self.put_to_staging_area(&self.hash_tree(&tree)?, Entry::Tree(tree.clone()));
                 self.map_stats.current_tree_elems = tree.len() as u64;
                 Ok(tree)
             }
@@ -468,7 +557,7 @@ impl MerkleStorage {
     }
 
     /// Persists an entry and its descendants from staged area to database on disk.
-    fn persist_staged_entry_to_db(&mut self, entry: &Entry) -> Result<(), MerkleError> {
+    fn persist_staged_entry_to_db(&self, entry: &Entry) -> Result<(), MerkleError> {
         let mut batch = Batch::default(); // batch containing DB key values to persist
 
         // build list of entries to be persisted
@@ -483,11 +572,11 @@ impl MerkleStorage {
     /// Builds vector of entries to be persisted to DB, recursively
     fn get_entries_recursively(&self, entry: &Entry, batch: &mut Batch) -> Result<(), MerkleError> {
         // add entry to batch
-        //self.db.apply_batch()
 
-        let k = &self.hash_entry(entry);
+        let k = &self.hash_entry(entry)?;
         let v = bincode::serialize(entry)?;
         self.db.write().unwrap().put_batch(batch,k,&v);
+
         match entry {
             Entry::Blob(_) => Ok(()),
             Entry::Tree(tree) => {
@@ -514,7 +603,7 @@ impl MerkleStorage {
         }
     }
 
-    fn hash_entry(&self, entry: &Entry) -> EntryHash {
+    fn hash_entry(&self, entry: &Entry) -> Result<EntryHash, MerkleError> {
         match entry {
             Entry::Commit(commit) => self.hash_commit(&commit),
             Entry::Tree(tree) => self.hash_tree(&tree),
@@ -522,54 +611,54 @@ impl MerkleStorage {
         }
     }
 
-    fn hash_commit(&self, commit: &Commit) -> EntryHash {
-        let mut hasher = State::new(HASH_LEN, None).unwrap();
-        hasher.update(&(HASH_LEN as u64).to_be_bytes()).expect("hasher");
-        hasher.update(&commit.root_hash).expect("hasher");
+    fn hash_commit(&self, commit: &Commit) -> Result<EntryHash, MerkleError> {
+        let mut hasher = VarBlake2b::new(HASH_LEN).unwrap();
+        hasher.update(&(HASH_LEN as u64).to_be_bytes());
+        hasher.update(&commit.root_hash);
 
         if commit.parent_commit_hash.is_none() {
-            hasher.update(&(0 as u64).to_be_bytes()).expect("hasher");
+            hasher.update(&(0 as u64).to_be_bytes());
         } else {
-            hasher.update(&(1 as u64).to_be_bytes()).expect("hasher"); // # of parents; we support only 1
-            hasher.update(&(commit.parent_commit_hash.unwrap().len() as u64).to_be_bytes()).expect("hasher");
-            hasher.update(&commit.parent_commit_hash.unwrap()).expect("hasher");
+            hasher.update(&(1 as u64).to_be_bytes()); // # of parents; we support only 1
+            hasher.update(&(commit.parent_commit_hash.unwrap().len() as u64).to_be_bytes());
+            hasher.update(&commit.parent_commit_hash.unwrap());
         }
-        hasher.update(&(commit.time as u64).to_be_bytes()).expect("hasher");
-        hasher.update(&(commit.author.len() as u64).to_be_bytes()).expect("hasher");
-        hasher.update(&commit.author.clone().into_bytes()).expect("hasher");
-        hasher.update(&(commit.message.len() as u64).to_be_bytes()).expect("hasher");
-        hasher.update(&commit.message.clone().into_bytes()).expect("hasher");
+        hasher.update(&(commit.time as u64).to_be_bytes());
+        hasher.update(&(commit.author.len() as u64).to_be_bytes());
+        hasher.update(&commit.author.clone().into_bytes());
+        hasher.update(&(commit.message.len() as u64).to_be_bytes());
+        hasher.update(&commit.message.clone().into_bytes());
 
-        hasher.finalize().unwrap().as_ref().try_into().expect("EntryHash conversion error")
+        Ok(hasher.finalize_boxed().as_ref().try_into()?)
     }
 
-    fn hash_tree(&self, tree: &Tree) -> EntryHash {
-        let mut hasher = State::new(HASH_LEN, None).unwrap();
+    fn hash_tree(&self, tree: &Tree) -> Result<EntryHash, MerkleError> {
+        let mut hasher = VarBlake2b::new(HASH_LEN).unwrap();
 
-        hasher.update(&(tree.len() as u64).to_be_bytes()).expect("hasher");
+        hasher.update(&(tree.len() as u64).to_be_bytes());
         tree.iter().for_each(|(k, v)| {
-            hasher.update(&self.encode_irmin_node_kind(&v.node_kind)).expect("hasher");
-            hasher.update(&[k.len() as u8]).expect("hasher");
-            hasher.update(&k.clone().into_bytes()).expect("hasher");
-            hasher.update(&(HASH_LEN as u64).to_be_bytes()).expect("hasher");
-            hasher.update(&v.entry_hash).expect("hasher");
+            hasher.update(&self.encode_irmin_node_kind(&v.node_kind));
+            hasher.update(&[k.len() as u8]);
+            hasher.update(&k.clone().into_bytes());
+            hasher.update(&(HASH_LEN as u64).to_be_bytes());
+            hasher.update(&v.entry_hash);
         });
 
-        hasher.finalize().unwrap().as_ref().try_into().expect("EntryHash conversion error")
+        Ok(hasher.finalize_boxed().as_ref().try_into()?)
     }
 
-    fn hash_blob(&self, blob: &ContextValue) -> EntryHash {
-        let mut hasher = State::new(HASH_LEN, None).unwrap();
-        hasher.update(&(blob.len() as u64).to_be_bytes()).expect("Failed to update hasher state");
-        hasher.update(blob).expect("Failed to update hasher state");
+    fn hash_blob(&self, blob: &ContextValue) -> Result<EntryHash, MerkleError> {
+        let mut hasher = VarBlake2b::new(HASH_LEN).unwrap();
+        hasher.update(&(blob.len() as u64).to_be_bytes());
+        hasher.update(blob);
 
-        hasher.finalize().unwrap().as_ref().try_into().expect("EntryHash conversion error")
+        Ok(hasher.finalize_boxed().as_ref().try_into()?)
     }
 
-    fn encode_irmin_node_kind(&self, kind: &NodeKind) -> Vec<u8> {
+    fn encode_irmin_node_kind(&self, kind: &NodeKind) -> [u8; 8] {
         match kind {
-            NodeKind::NonLeaf => vec![0, 0, 0, 0, 0, 0, 0, 0],
-            NodeKind::Leaf => vec![255, 0, 0, 0, 0, 0, 0, 0],
+            NodeKind::NonLeaf => [0, 0, 0, 0, 0, 0, 0, 0],
+            NodeKind::Leaf => [255, 0, 0, 0, 0, 0, 0, 0],
         }
     }
 
@@ -602,15 +691,14 @@ impl MerkleStorage {
         }
     }
 
+    /// Get entry from staging area or look up in DB if not found
     fn get_entry(&self, hash: &EntryHash) -> Result<Entry, MerkleError> {
         match self.staged.get(hash) {
             None => {
-                let entry_bytes = self.db.read().unwrap().get(hash)?;
+                let entry_bytes = self.db.write().unwrap().get(hash)?;
                 match entry_bytes {
                     None => Err(MerkleError::EntryNotFound { hash: HashType::ContextHash.bytes_to_string(hash) }),
-                    Some(entry_bytes) => {
-                        Ok(bincode::deserialize(entry_bytes.as_ref())?)
-                    }
+                    Some(entry_bytes) => Ok(bincode::deserialize(&entry_bytes)?),
                 }
             }
             Some(entry) => Ok(entry.clone()),
@@ -621,21 +709,22 @@ impl MerkleStorage {
         Node { node_kind: NodeKind::NonLeaf, entry_hash: hash }
     }
 
+    /// Convert key in array form to string form
     fn key_to_string(&self, key: &ContextKey) -> String {
         key.join("/")
     }
 
+    /// Convert key in string form to array form
     fn string_to_key(&self, string: &str) -> ContextKey {
         string.split('/').map(str::to_string).collect()
     }
 
+    /// Get last committed hash
     pub fn get_last_commit_hash(&self) -> Option<EntryHash> {
-        match &self.last_commit {
-            Some(c) => Some(self.hash_commit(&c)),
-            None => None
-        }
+        self.last_commit_hash
     }
 
+    /// Get various merkle storage statistics
     pub fn get_merkle_stats(&self) -> Result<MerkleStorageStats, MerkleError> {
         let mut avg_set_exec_time_ns: f64 = 0.0;
         if self.set_exec_times > self.set_exec_times_to_discard {
@@ -670,7 +759,7 @@ mod tests {
         storage.set(&vec!["one".to_string(), "two".to_string(), "three".to_string()], &vec![97]);
         let tree = storage.current_stage_tree.clone().unwrap().clone();
 
-        let hash = storage.hash_tree(&tree);
+        let hash = storage.hash_tree(&tree).unwrap();
 
         assert_eq!([0xDB, 0xAE, 0xD7, 0xB6], hash[0..4]);
     }
