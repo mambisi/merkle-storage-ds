@@ -13,25 +13,10 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/benchmark/src/channel.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmark/src/test_actions.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/merkle/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/merkle-storage-ds.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/merkle-storage-ds.iml" afterDir="false" />
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="project structure change&#10;test data added">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/benchmark/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/base58.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/base58.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/blake2b.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/blake2b.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/codec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/codec.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/database.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db_iterator.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/db_iterator.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/hash.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/hash.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ivec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/ivec.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/schema.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -130,8 +115,16 @@
       <workItem from="1608020313355" duration="62000" />
       <workItem from="1608020392148" duration="10000" />
       <workItem from="1608020419242" duration="665000" />
-      <workItem from="1608021101836" duration="6205000" />
+      <workItem from="1608021101836" duration="12515000" />
     </task>
+    <task id="LOCAL-00001" summary="project structure change&#10;test data added">
+      <created>1608032022010</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1608032022010</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -151,26 +144,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/benchmark/src/main.rs</url>
-          <line>36</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/benchmark/src/main.rs</url>
-          <line>32</line>
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/benchmark/src/main.rs</url>
-          <line>28</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="project structure change&#10;test data added" />
+    <option name="LAST_COMMIT_MESSAGE" value="project structure change&#10;test data added" />
   </component>
 </project>
