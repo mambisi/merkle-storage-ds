@@ -1,6 +1,8 @@
-extern crate merkle_storage;
+extern crate merkle;
 
-use merkle_storage::prelude::*;
+mod channel;
+
+use merkle::prelude::*;
 use std::sync::{Arc, RwLock};
 use rayon::prelude::*;
 use std::time::Instant;
@@ -8,54 +10,56 @@ use rand::prelude::*;
 use std::sync::atomic::{AtomicI64, Ordering};
 use timer;
 use chrono::Duration;
+use crate::channel::{ContextAction, ContextActionJson};
+use std::io::{Cursor, Read};
+use serde_json::{Value, Map};
+use std::convert::TryInto;
+
 
 fn main() {
-    // simulate parallel connected clients
-    let c = 100;
-    // simulate set commands by clients
-    let n = 50000;
-    let mut vec = vec![vec!["data".to_string(), "a".to_string(), "x".to_string()]; c];
-    let db = Arc::new(RwLock::new(DB::new()));
-    let timer = timer::Timer::new();
-    let timer2 = timer::Timer::new();
-    let mut sets = Arc::new(AtomicI64::new(0));
-    let mut total_duration = Arc::new(AtomicI64::new(1));
+    let json_file = include_bytes!("test_actions.json");
+    let mut messages: Vec<ContextActionJson> = serde_json::from_slice(json_file).unwrap();
 
-    let mut sets_clone = sets.clone();
-    let mut total_duration_clone = total_duration.clone();
+    let mut storage = MerkleStorage::new(Arc::new(RwLock::new(DB::new())));
 
-    let mut sets_clone_2 = sets.clone();
-    let mut total_duration_clone_2 = total_duration.clone();
+    for msg in &messages {
+        match &msg.action {
+            ContextAction::Set { key, value, context_hash, ignored, .. } =>
+                if !ignored {
+                    storage.set(key, value);
+                }
+            ContextAction::Copy { to_key: key, from_key, context_hash, ignored, .. } =>
+                if !ignored {
+                    storage.copy(from_key, key);
+                }
+            ContextAction::Delete { key, context_hash, ignored, .. } =>
+                if !ignored {
+                    storage.delete(key);
+                }
+            ContextAction::RemoveRecursively { key, context_hash, ignored, .. } =>
+                if !ignored {
+                    storage.delete(key);
+                }
+            ContextAction::Commit {
+                parent_context_hash, new_context_hash, block_hash: Some(block_hash),
+                author, message, date, ..
+            } => {
+                let date = *date as u64;
+                let hash = storage.commit(date, author.to_owned(), message.to_owned()).unwrap();
+                let commit_hash = hash[..].to_vec();
+                assert_eq!(&commit_hash, new_context_hash,
+                           "Invalid context_hash for block: {}, expected: {}, but was: {}",
+                           HashType::BlockHash.bytes_to_string(block_hash),
+                           HashType::ContextHash.bytes_to_string(new_context_hash),
+                           HashType::ContextHash.bytes_to_string(&commit_hash),
+                );
+            }
 
-    let g1 = {
-        timer.schedule_repeating(Duration::seconds(1), move || {
-            let s = sets_clone_2.fetch_or(0, Ordering::SeqCst);
-            let d = total_duration_clone_2.fetch_or(1, Ordering::SeqCst);
-            println!("{} sets/sec", s / d);
-        })
-    };
-    let g2 = {
-        timer2.schedule_repeating(Duration::seconds(1), move || {
-            total_duration_clone.fetch_add(1, Ordering::SeqCst);
-        })
-    };
-
-    vec.par_iter().for_each(|k| {
-        let mut storage = MerkleStorage::new(db.clone());
-        for i in 1..n {
-            let mut rng = rand::thread_rng();
-            let mut v: Vec<u8> = (1..5).collect();
-            v.shuffle(&mut rng);
-            storage.set(k, &v);
-            sets_clone.fetch_add(1, Ordering::SeqCst);
-        }
-        //println!("{} sets/ {} ms", n, timer.elapsed().as_millis());
-    });
-
-    drop(g1);
-    drop(g2);
-
-    let s = sets.fetch_or(0, Ordering::SeqCst);
-    let d = total_duration.fetch_or(1, Ordering::SeqCst);
-    println!("clients :{} reqs: {} sets: {}  finished in {} secs, {} sets/sec", c, n, s, d, s / d)
+            ContextAction::Checkout { context_hash, .. } => {
+                let context_hash_arr: EntryHash = context_hash.as_slice().try_into().unwrap();
+                storage.checkout(&context_hash_arr);
+            }
+            _ => (),
+        };
+    }
 }

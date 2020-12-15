@@ -63,7 +63,7 @@ pub type ContextKey = Vec<String>;
 pub type ContextValue = Vec<u8>;
 pub type EntryHash = [u8; HASH_LEN];
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 enum NodeKind {
     NonLeaf,
     Leaf,
@@ -650,8 +650,6 @@ impl MerkleStorage {
 #[allow(unused_must_use)]
 mod tests {
     use super::*;
-    use std::path::Path;
-    use std::fs;
     use serial_test::serial;
     use crate::database::{DB};
 
@@ -850,6 +848,59 @@ mod tests {
         assert_eq!(storage.get(&key_abc).unwrap(), vec![3u8]);
         assert_eq!(storage.get(&key_abx).unwrap(), vec![4u8]);
     }
+
+    #[test]
+    #[serial]
+    fn test_value_removal_from_commit() {
+        let mut storage = get_storage();
+        let _commit = storage.commit(
+            0, "Tezos".to_string(), "Genesis".to_string());
+
+        storage.set(&vec!["data".to_string(), "a".to_string(), "x".to_string()], &vec![97]);
+        let commit1 = storage.commit(
+            0, "Tezos".to_string(), "1".to_string());
+
+        storage.set(&vec!["data".to_string(), "a".to_string(), "x".to_string()], &vec![94]);
+        //storage.set(&vec!["data".to_string(), "a".to_string(), "b".to_string()], &vec![98]);
+
+        let commit2 = storage.commit(
+            0, "Tezos".to_string(), "2".to_string());
+
+        storage.set(&vec!["data".to_string(), "a".to_string(), "g".to_string()], &vec![95]);
+        //storage.set(&vec!["data".to_string(), "a".to_string(), "b".to_string()], &vec![98]);
+
+        let commit3 = storage.commit(
+            0, "Tezos".to_string(), "3".to_string());
+
+        /*
+        storage.copy(&vec!["data".to_string(), "a".to_string()], &vec!["data".to_string(), "b".to_string()]);
+        let commit3 = storage.commit(
+            0, "Tezos".to_string(), "3".to_string());
+
+        let result = storage.get_history(&commit1.unwrap(), &vec!["data".to_string(), "a".to_string(), "x".to_string()]);
+        let value_in_commit_1 = result.unwrap();
+        let commit_key = commit3.unwrap();
+        */
+
+        let commit_1 = storage.get_commit(&commit1.unwrap()).unwrap();
+        let commit_1_root_entry = storage.get_entry(&commit_1.root_hash).unwrap();
+
+
+        if let Entry::Tree(t) = &commit_1_root_entry {
+            for (k1, e) in t {
+                if e.node_kind == NodeKind::NonLeaf {
+                    if let Entry::Tree(t) = &storage.get_entry(&e.entry_hash).unwrap(){
+                        for (k2, e2) in t.iter() {
+                            println!("{:#?}", e2)
+                        }
+                    }
+                }
+            }
+        }
+
+        //let e = storage.get_from_tree(&commit_1.root_hash, &vec!["a".to_owned(),"x".to_owned()]);
+    }
+
 
     #[test]
     #[serial]

@@ -15,5 +15,6 @@ pub mod prelude {
     pub use crate::merkle_storage::*;
     pub use crate::db_iterator::*;
     pub use crate::codec::*;
+    pub use crate::hash::*;
     pub use crate::ivec::IVec;
 }

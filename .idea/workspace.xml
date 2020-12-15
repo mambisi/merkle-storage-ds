@@ -1,29 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="BranchesTreeState">
-    <expand>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-    </expand>
-    <select />
-  </component>
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated />
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" ENABLED="true" />
     </configurations>
   </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
-    <cargoProject FILE="$PROJECT_DIR$/benchmark/Cargo.toml" />
+    <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="db4c3393-57d5-41df-a374-f80cd2c806dc" name="Default Changelist" comment="readme update">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/benchmark/src/channel.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmark/src/test_actions.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/merkle/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/merkle-storage-ds.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/merkle-storage-ds.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/base58.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/base58.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/blake2b.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/blake2b.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/codec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/codec.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/database.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db_iterator.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/db_iterator.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/hash.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/hash.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ivec.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/ivec.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/schema.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,96 +41,73 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Rust File" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="MacroExpansionManager">
-    <option name="directoryName" value="9e67zwqm" />
+    <option name="directoryName" value="7o6da5to" />
   </component>
-  <component name="ProjectId" id="1kywRxTHPjEfmwDBVzCzNb8JvSS" />
+  <component name="ProjectId" id="1lgCDqnJUYHdNqWRniIo3VEzBT1" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
-    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
-    <property name="settings.editor.selected.configurable" value="language.rust" />
+    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
   </component>
-  <component name="RunManager" selected="Cargo.Run Benchmarks">
-    <configuration name="Run Benchmarks" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/benchmark/src" />
+      <recent name="$PROJECT_DIR$/benchmark" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/merkle/src" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Cargo.Run benchmark">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Run benchmark" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+      <option name="command" value="run --package benchmark --bin benchmark" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$/merkle" />
       <option name="channel" value="DEFAULT" />
-      <option name="command" value="run" />
       <option name="allFeatures" value="false" />
       <option name="emulateTerminal" value="false" />
       <option name="backtrace" value="SHORT" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$/benchmark" />
       <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
       <method v="2">
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
     <configuration name="Run" type="CargoCommandRunConfiguration" factoryName="Cargo Command" nameIsGenerated="true">
-      <option name="channel" value="DEFAULT" />
       <option name="command" value="run" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <envs />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Test ivec::ivec_usage" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="channel" value="DEFAULT" />
-      <option name="command" value="test --package merkle_storage --lib ivec::ivec_usage -- --exact" />
       <option name="allFeatures" value="false" />
       <option name="emulateTerminal" value="false" />
       <option name="backtrace" value="SHORT" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
       <method v="2">
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Test merkle_storage::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="channel" value="DEFAULT" />
-      <option name="command" value="test --package merkle_storage --lib merkle_storage::tests" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-      <envs />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <list>
-      <item itemvalue="Cargo.Run Benchmarks" />
-      <item itemvalue="Cargo.Run" />
-      <item itemvalue="Cargo.Test ivec::ivec_usage" />
-      <item itemvalue="Cargo.Test merkle_storage::tests" />
-    </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Cargo.Test merkle_storage::tests" />
-        <item itemvalue="Cargo.Test ivec::ivec_usage" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
@@ -131,36 +116,22 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="db4c3393-57d5-41df-a374-f80cd2c806dc" name="Default Changelist" comment="" />
-      <created>1606686136152</created>
+      <changelist id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="" />
+      <created>1608009232253</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1606686136152</updated>
-      <workItem from="1606686138504" duration="9103000" />
-      <workItem from="1606732813771" duration="1000" />
+      <updated>1608009232253</updated>
+      <workItem from="1608009233969" duration="262000" />
+      <workItem from="1608012957769" duration="202000" />
+      <workItem from="1608016052897" duration="279000" />
+      <workItem from="1608017676120" duration="21000" />
+      <workItem from="1608017788686" duration="406000" />
+      <workItem from="1608018302715" duration="240000" />
+      <workItem from="1608020313355" duration="62000" />
+      <workItem from="1608020392148" duration="10000" />
+      <workItem from="1608020419242" duration="665000" />
+      <workItem from="1608021101836" duration="6205000" />
     </task>
-    <task id="LOCAL-00001" summary="Initial Commit">
-      <created>1606693882397</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1606693882397</updated>
-    </task>
-    <task id="LOCAL-00002" summary="benchmarking">
-      <created>1606726937610</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1606726937610</updated>
-    </task>
-    <task id="LOCAL-00003" summary="readme update">
-      <created>1606728747225</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1606728747225</updated>
-    </task>
-    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -179,55 +150,27 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Initial Commit" />
-    <MESSAGE value="benchmarking" />
-    <MESSAGE value="readme update" />
-    <option name="LAST_COMMIT_MESSAGE" value="readme update" />
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
-  <component name="WindowStateProjectService">
-    <state x="304" y="187" width="1071" height="748" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606693325904">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="304" y="187" width="1071" height="748" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1606693325904" />
-    <state width="1636" height="364" key="GridCell.Tab.0.bottom" timestamp="1606728777680">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777680" />
-    <state width="1636" height="364" key="GridCell.Tab.0.center" timestamp="1606728777679">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.center/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777679" />
-    <state width="1636" height="364" key="GridCell.Tab.0.left" timestamp="1606728777679">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.left/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777679" />
-    <state width="1636" height="364" key="GridCell.Tab.0.right" timestamp="1606728777680">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.0.right/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777680" />
-    <state width="1636" height="364" key="GridCell.Tab.1.bottom" timestamp="1606728777683">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777683" />
-    <state width="1636" height="364" key="GridCell.Tab.1.center" timestamp="1606728777681">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.center/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777681" />
-    <state width="1636" height="364" key="GridCell.Tab.1.left" timestamp="1606728777681">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.left/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777681" />
-    <state width="1636" height="364" key="GridCell.Tab.1.right" timestamp="1606728777682">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="1636" height="364" key="GridCell.Tab.1.right/0.0.1680.1050@0.0.1680.1050" timestamp="1606728777682" />
-    <state x="379" y="164" key="SettingsEditor" timestamp="1606687785042">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="379" y="164" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1606687785042" />
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1606728748557">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1606728748557" />
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/benchmark/src/main.rs</url>
+          <line>36</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/benchmark/src/main.rs</url>
+          <line>32</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/benchmark/src/main.rs</url>
+          <line>28</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
