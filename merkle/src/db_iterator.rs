@@ -15,7 +15,7 @@ pub enum Direction {
 pub enum IteratorMode {
     Start,
     End,
-    From(IVec, Direction),
+    From(Vec<u8>, Direction),
 }
 
 pub struct DBIterator<'a> {
@@ -34,7 +34,7 @@ impl<'a> DBIterator<'a> {
 
 
 impl<'a> Iterator for DBIterator<'a> {
-    type Item = (IVec, IVec);
+    type Item = (Vec<u8>, Vec<u8>);
 
     fn next(&mut self) -> Option<Self::Item> {
         match &self.mode {
@@ -45,13 +45,13 @@ impl<'a> Iterator for DBIterator<'a> {
                 self.raw.inner.iter().last().map(|(k, v)| { (k.clone(), v.clone()) })
             }
             IteratorMode::From(k, direction) => {
-                let key = k.to_vec();
+                //let key = k.to_vec();
                 match direction {
                     Direction::Forward => {
-                        self.raw.inner.range(IVec::from(key)..).next().map(|(k, v)| { (k.clone(), v.clone()) })
+                        self.raw.inner.iter_prefix(k).next().map(|(k, v)| { (k.clone(), v.clone()) })
                     }
                     Direction::Reverse => {
-                        self.raw.inner.range(IVec::from(key)..).last().map(|(k, v)| { (k.clone(), v.clone()) })
+                        self.raw.inner.iter_prefix(k).last().map(|(k, v)| { (k.clone(), v.clone()) })
                     }
                 }
             }
@@ -70,6 +70,6 @@ impl DBIterationHandler for DB {
     }
 
     fn scan_prefix(&self, prefix: &[u8]) -> DBIterator {
-        DBIterator::new(self, IteratorMode::From(IVec::from(prefix), Direction::Forward))
+        DBIterator::new(self, IteratorMode::From(prefix.to_vec(), Direction::Forward))
     }
 }

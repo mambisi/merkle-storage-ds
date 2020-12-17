@@ -6,8 +6,7 @@ type Hash = Vec<u8>;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ContextActionJson {
     #[serde(flatten)]
-    pub action: ContextAction,
-    pub id: u64,
+    pub action: ContextAction
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
