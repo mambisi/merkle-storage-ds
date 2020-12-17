@@ -85,7 +85,6 @@ async fn test_all_blocks() -> Result<(), Box<dyn std::error::Error>>{
     let mut storage = MerkleStorage::new(Arc::new(RwLock::new(DB::new())));
     //env!("BASE_URL")
     let base_url = "http://46.101.190.161:18732";
-    let client = reqwest::Client::new();
     let blocks_url = format!("{}/dev/chains/main/blocks?limit=10", base_url);
 
     let mut blocks = reqwest::get(&blocks_url)
@@ -95,7 +94,7 @@ async fn test_all_blocks() -> Result<(), Box<dyn std::error::Error>>{
     for block in &blocks {
         let block = block.as_object().unwrap();
         let block_hash = block.get("hash").unwrap().as_str();
-        let actions_url = format!("{}/dev/chains/main/actions/blocks", base_url);
+        let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", base_url,block_hash.unwrap());
         let mut messages = reqwest::get(&actions_url)
             .await?
             .json::<Vec<ContextActionJson>>()
