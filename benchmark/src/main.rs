@@ -85,7 +85,7 @@ async fn test_all_blocks() -> Result<(), Box<dyn std::error::Error>>{
     let mut storage = MerkleStorage::new(Arc::new(RwLock::new(DB::new())));
     //env!("BASE_URL")
     let base_url = "http://46.101.190.161:18732";
-    let blocks_url = format!("{}/dev/chains/main/blocks?limit=10", base_url);
+    let blocks_url = format!("{}/dev/chains/main/blocks?limit=10000000", base_url);
 
     let mut blocks = reqwest::get(&blocks_url)
         .await?
