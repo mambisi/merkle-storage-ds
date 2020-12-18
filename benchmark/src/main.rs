@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn run_benchmark(base_url : &str, blocks_limit: u64) -> Result<(), Box<dyn std::error::Error>>{
 
 
-    let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id=12", base_url,blocks_limit);
+    let blocks_url = format!("{}/dev/chains/main/blocks?&from_block_id={}", base_url,blocks_limit);
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
 
