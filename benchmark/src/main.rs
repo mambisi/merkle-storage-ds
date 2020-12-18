@@ -40,11 +40,14 @@ async fn run_benchmark(base_url : &str, blocks_limit: u64) -> Result<(), Box<dyn
     for block in &blocks {
         let block = block.as_object().unwrap();
         let block_hash = block.get("hash").unwrap().as_str();
-        let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", base_url,block_hash.unwrap());
+        let block_hash = block_hash.unwrap();
+        let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", base_url,block_hash);
         let mut messages = reqwest::get(&actions_url)
             .await?
             .json::<Vec<ContextActionJson>>()
             .await?;
+
+        println!("Block :{}, actions count: {}",block_hash,messages.len());
 
         for msg in &messages {
             match &msg.action {
