@@ -18,7 +18,7 @@ use std::collections::BTreeMap;
 use clap::Arg;
 use sysinfo::{SystemExt, Process, ProcessExt};
 use tokio::process::Command;
-use tracing::stdlib::process::Output;
+use std::process::Output;
 use tokio::io::Error;
 use tokio::macros::support::Future;
 
@@ -131,7 +131,7 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
         if block_level % cycle == 0 {
             println!("Blocks Applied: {}", block_level);
             if cfg!(target_os = "linux") {
-                let out = Command::new("top").arg("-p").arg(pid).output().await;
+                let out = Command::new("top").arg("-p").arg(process_id).output().await;
                 match out {
                     Ok(o) => {
                         println!("{:?}", o)
