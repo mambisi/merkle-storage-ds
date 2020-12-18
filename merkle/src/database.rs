@@ -7,6 +7,7 @@ use std::collections::{HashMap, BTreeMap};
 use crate::db_iterator::{DBIterator, DBIterationHandler};
 use crate::ivec::IVec;
 use patricia_tree::PatriciaMap;
+use crate::merkle_storage::EntryHash;
 
 #[derive(Debug, Default, Clone)]
 pub struct Batch {
@@ -29,6 +30,28 @@ impl Batch {
             K: Into<Vec<u8>>,
     {
         self.writes.insert(key.into(), None);
+    }
+}
+
+//Mark: Hack
+#[derive(Debug, Default, Clone)]
+pub struct WriteBatch {
+    pub writes: HashMap<EntryHash, Vec<u8>>,
+}
+
+impl WriteBatch {
+    /// Set a key to a new value
+    pub fn insert<V>(&mut self, key: EntryHash, value: V)
+        where
+            V: Into<Vec<u8>>,
+    {
+        self.writes.insert(key.into(), value.into());
+    }
+
+    /// Remove a key
+    pub fn remove(&mut self, key: &EntryHash)
+    {
+        self.writes.remove(key);
     }
 }
 

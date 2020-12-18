@@ -55,11 +55,12 @@ use std::convert::TryInto;
 use sodiumoxide::crypto::generichash::State;
 use crate::codec::BincodeEncoded;
 use crate::schema::KeyValueSchema;
-use crate::database::{KeyValueStoreWithSchema, Batch, DB};
+use crate::database::{KeyValueStoreWithSchema, Batch, DB, WriteBatch};
 use crate::database::DBError;
 use blake2::digest::{Update, VariableOutput};
 use blake2::VarBlake2b;
 use std::array::TryFromSliceError;
+use crate::ivec::IVec;
 
 const HASH_LEN: usize = 32;
 
@@ -112,7 +113,7 @@ pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + S
 pub struct MerkleStorage {
     /// tree with current staging area (currently checked out context)
     current_stage_tree: Option<Tree>,
-    db: Arc<RwLock<MerkleStorageKV>>,
+    db: Arc<RwLock<BTreeMap<EntryHash,Vec<u8>>>>,
     /// all entries in current staging area
     staged: HashMap<EntryHash, Entry>,
     last_commit_hash: Option<EntryHash>,
@@ -193,7 +194,7 @@ impl KeyValueSchema for MerkleStorage {
 }
 
 impl MerkleStorage {
-    pub fn new(db: Arc<RwLock<DB>>) -> Self {
+    pub fn new(db: Arc<RwLock<BTreeMap<EntryHash,Vec<u8>>>>) -> Self {
         MerkleStorage {
             db,
             staged: HashMap::new(),
@@ -558,24 +559,30 @@ impl MerkleStorage {
 
     /// Persists an entry and its descendants from staged area to database on disk.
     fn persist_staged_entry_to_db(&self, entry: &Entry) -> Result<(), MerkleError> {
-        let mut batch = Batch::default(); // batch containing DB key values to persist
+        let mut batch = WriteBatch::default(); // batch containing DB key values to persist
 
         // build list of entries to be persisted
         self.get_entries_recursively(entry, &mut batch)?;
 
         // atomically write all entries in one batch to DB
-        self.db.write().unwrap().write_batch(batch)?;
+
+        let mut db_writer = self.db.write().unwrap();
+
+        for (k,v) in batch.writes {
+            db_writer.insert(k,v);
+        }
 
         Ok(())
     }
 
     /// Builds vector of entries to be persisted to DB, recursively
-    fn get_entries_recursively(&self, entry: &Entry, batch: &mut Batch) -> Result<(), MerkleError> {
+    fn get_entries_recursively(&self, entry: &Entry, batch: &mut WriteBatch) -> Result<(), MerkleError> {
         // add entry to batch
 
-        let k = &self.hash_entry(entry)?;
+        let k = self.hash_entry(entry)?;
         let v = bincode::serialize(entry)?;
-        self.db.write().unwrap().put_batch(batch,k,&v);
+
+        batch.insert(k,v);
 
         match entry {
             Entry::Blob(_) => Ok(()),
@@ -693,9 +700,10 @@ impl MerkleStorage {
 
     /// Get entry from staging area or look up in DB if not found
     fn get_entry(&self, hash: &EntryHash) -> Result<Entry, MerkleError> {
+        let db_reader = self.db.read().unwrap();
         match self.staged.get(hash) {
             None => {
-                let entry_bytes = self.db.write().unwrap().get(hash)?;
+                let entry_bytes = db_reader.get(hash);
                 match entry_bytes {
                     None => Err(MerkleError::EntryNotFound { hash: HashType::ContextHash.bytes_to_string(hash) }),
                     Some(entry_bytes) => Ok(bincode::deserialize(&entry_bytes)?),
@@ -745,7 +753,7 @@ mod tests {
     /*
     * Tests need to run sequentially, otherwise they will try to open RocksDB at the same time.
     */
-    fn get_storage() -> MerkleStorage { MerkleStorage::new(Arc::new(RwLock::new(DB::new()))) }
+    fn get_storage() -> MerkleStorage { MerkleStorage::new(Arc::new(RwLock::new(BTreeMap::new()))) }
 
 
     #[test]
