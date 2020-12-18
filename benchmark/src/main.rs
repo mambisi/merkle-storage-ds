@@ -130,15 +130,23 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
 
         if block_level % cycle == 0 {
             println!("Blocks Applied: {}", block_level);
+            let pid = process_id.to_string();
             if cfg!(target_os = "linux") {
-                let pid = process_id.to_string();
-                let out = Command::new("top").arg("-p").arg(pid.as_str()).output().await;
-                match out {
-                    Ok(o) => {
-                        println!("{:?}", o)
+                let output = Command::new("ps")
+                    .arg("-p")
+                    .arg(&pid)
+                    .arg("-o")
+                    .arg("pid,size")
+                    .output().await;
+                match output {
+                    Ok(output) => {
+                        println!("{}",String::from_utf8_lossy(&output.stdout))
                     }
-                    Err(_) => {}
+                    Err(_) => {
+                        println!("Error executing PS")
+                    }
                 }
+
             }
         }
     }
