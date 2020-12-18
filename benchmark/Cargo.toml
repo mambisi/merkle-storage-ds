@@ -19,3 +19,6 @@ serde_json = "1.0"
 reqwest = { version = "0.10", features = ["json"] }
 tokio = { version = "0.2", features = ["full"] }
 clap = "2.33.3"
+tracing = "0.1"
+tracing-subscriber = "0.2"
+sysinfo = "0.15.3"
