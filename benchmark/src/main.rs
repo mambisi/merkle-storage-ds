@@ -17,6 +17,10 @@ use std::convert::TryInto;
 use std::collections::BTreeMap;
 use clap::Arg;
 use sysinfo::{SystemExt, Process, ProcessExt};
+use tokio::process::Command;
+use tracing::stdlib::process::Output;
+use tokio::io::Error;
+use tokio::macros::support::Future;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -124,18 +128,19 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             };
         }
 
-
-        let system = sysinfo::System::new();
-        match system.get_process(process_id as i32) {
-            None => {}
-            Some(process) => {
-                if block_level % cycle == 0 {
-                    println!("Blocks Applied: {}", block_level);
-                    println!("Memory Stats: {}", process.memory());
-                    println!("Virtual Memory Stats: {}", process.virtual_memory())
+        if block_level % cycle == 0 {
+            println!("Blocks Applied: {}", block_level);
+            if cfg!(target_os = "linux") {
+                let out = Command::new("top").arg("-p").arg(pid).output().await;
+                match out {
+                    Ok(o) => {
+                        println!("{:?}", o)
+                    }
+                    Err(_) => {}
                 }
             }
-        };
+        }
     }
     Ok(())
 }
+
