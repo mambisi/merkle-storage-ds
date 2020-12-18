@@ -26,7 +26,7 @@ async fn test_genesis_block(genesis_block : &str) -> Result<(), Box<dyn std::err
     let db = Arc::new(RwLock::new(BTreeMap::new()));
     let mut storage = MerkleStorage::new(db.clone());
     //env!("BASE_URL")
-    let base_url = "http://46.101.190.161:18732";
+    let base_url = "http://127.0.0.1:18732";
 
     let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", base_url, genesis_block);
     let mut messages = reqwest::get(&actions_url)
@@ -92,7 +92,7 @@ async fn test_all_blocks() -> Result<(), Box<dyn std::error::Error>>{
 
 
 
-    let base_url = "http://46.101.190.161:18732";
+    let base_url = "http://127.0.0.1:18732";
     let blocks_url = format!("{}/dev/chains/main/blocks?limit=2&from_block_id=1", base_url);
     let db = Arc::new(RwLock::new(BTreeMap::new()));
     let mut storage = MerkleStorage::new(db.clone());
