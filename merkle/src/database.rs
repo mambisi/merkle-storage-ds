@@ -6,20 +6,19 @@ use crate::db_iterator;
 use std::collections::{HashMap, BTreeMap};
 use crate::db_iterator::{DBIterator, DBIterationHandler};
 use crate::ivec::IVec;
-use patricia_tree::PatriciaMap;
-use crate::merkle_storage::EntryHash;
+
 
 #[derive(Debug, Default, Clone)]
 pub struct Batch {
-    pub(crate) writes: HashMap<Vec<u8>, Option<Vec<u8>>>,
+    pub(crate) writes: HashMap<IVec, Option<IVec>>,
 }
 
 impl Batch {
     /// Set a key to a new value
     pub fn insert<K, V>(&mut self, key: K, value: V)
         where
-            K: Into<Vec<u8>>,
-            V: Into<Vec<u8>>,
+            K: Into<IVec>,
+            V: Into<IVec>,
     {
         self.writes.insert(key.into(), Some(value.into()));
     }
@@ -27,31 +26,9 @@ impl Batch {
     /// Remove a key
     pub fn remove<K>(&mut self, key: K)
         where
-            K: Into<Vec<u8>>,
+            K: Into<IVec>,
     {
         self.writes.insert(key.into(), None);
-    }
-}
-
-//Mark: Hack
-#[derive(Debug, Default, Clone)]
-pub struct WriteBatch {
-    pub writes: HashMap<EntryHash, Vec<u8>>,
-}
-
-impl WriteBatch {
-    /// Set a key to a new value
-    pub fn insert<V>(&mut self, key: EntryHash, value: V)
-        where
-            V: Into<Vec<u8>>,
-    {
-        self.writes.insert(key.into(), value.into());
-    }
-
-    /// Remove a key
-    pub fn remove(&mut self, key: &EntryHash)
-    {
-        self.writes.remove(key);
     }
 }
 
@@ -165,26 +142,29 @@ impl<'a, S: KeyValueSchema> Iterator for IteratorWithSchema<'a, S> {
 }
 
 pub struct DB {
-    pub(crate) inner : PatriciaMap<Vec<u8>>
+    pub(crate) inner : BTreeMap<IVec,IVec>
 }
 
 impl DB {
 
     pub fn new() -> Self {
         DB {
-            inner: PatriciaMap::new()
+            inner: BTreeMap::new()
         }
     }
 
     pub(crate) fn apply_batch(&mut self, batch: Batch) {
-        batch.writes.iter().for_each(|(k,v)| {
+        self.inner.extend(batch.writes.iter().map(|(k,v)|{
+
             match v {
-                None => {}
-                Some(v) => {
-                    self.inner.insert(k.clone(),v.clone());
+                None => {
+                    (k.clone(),IVec::default())
                 }
-            };
-        });
+                Some(v) => {
+                    (k.clone(),v.clone())
+                }
+            }
+        }))
     }
 }
 
@@ -205,20 +185,20 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
     fn put(&mut self, key: &S::Key, value: &S::Value) -> Result<(), DBError> {
         let key = key.encode()?;
         let value = value.encode()?;
-        self.inner.insert(key, value);
+        self.inner.insert(key.into(), value.into());
         Ok(())
     }
 
     fn delete(&mut self, key: &S::Key) -> Result<(), DBError> {
         let key = key.encode()?;
-        self.inner.remove(key);
+        self.inner.remove(&IVec::from(key));
         Ok(())
     }
 
     fn merge(&mut self, key: &S::Key, value: &<S as KeyValueSchema>::Value) -> Result<(), DBError> {
         let key = key.encode()?;
         let value = value.encode()?;
-        self.inner.insert(key, value);
+        self.inner.insert(key.into(), value.into());
         Ok(())
     }
 
@@ -260,13 +240,13 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
 
     fn prefix_iterator(&self, key: &S::Key) -> Result<IteratorWithSchema<S>, DBError> {
         let key = key.encode()?;
-        let iter = self.scan_prefix(&key);
+        let iter = self.scan_prefix(&IVec::from(key));
         Ok(IteratorWithSchema(iter, PhantomData))
     }
 
     fn contains(&self, key: &S::Key) -> Result<bool, DBError> {
         let key = key.encode()?;
-        Ok(self.inner.contains_key(&key))
+        Ok(self.inner.contains_key(&IVec::from(key)))
     }
 
     fn put_batch(&self, batch: &mut Batch, key: &S::Key, value: &S::Value) -> Result<(), DBError> {
@@ -285,5 +265,4 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
         Ok(DBStats {})
     }
 }
-
 
