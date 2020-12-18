@@ -55,16 +55,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("node {}, limit {}, process id: {}", node, blocks_limit, process_id);
 
-    let system = sysinfo::System::default();
 
-
-    let process = system.get_process(process_id as i32).expect("couldn't get process id");
-
-    run_benchmark(process, node, blocks_limit, cycle).await
+    run_benchmark(process_id, node, blocks_limit, cycle).await
 }
 
 
-async fn run_benchmark(process: &Process, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
     let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, blocks_limit + 10, blocks_limit);
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
@@ -128,13 +124,18 @@ async fn run_benchmark(process: &Process, node: &str, blocks_limit: u64, cycle: 
             };
         }
 
-        if block_level % cycle == 0 {
-            println!("Blocks Applied: {}", block_level);
-            println!("Memory Stats: {}", process.memory());
-            println!("Virtual Memory Stats: {}", process.virtual_memory())
-        }
 
-
+        let system = sysinfo::System::new();
+        match system.get_process(process_id as i32) {
+            None => {}
+            Some(process) => {
+                if block_level % cycle == 0 {
+                    println!("Blocks Applied: {}", block_level);
+                    println!("Memory Stats: {}", process.memory());
+                    println!("Virtual Memory Stats: {}", process.virtual_memory())
+                }
+            }
+        };
     }
     Ok(())
 }

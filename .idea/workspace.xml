@@ -13,11 +13,9 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="node test">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="Ready for test">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmark/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmark/src/test_actions.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -168,7 +166,7 @@
       <workItem from="1608153866274" duration="2522000" />
       <workItem from="1608205182148" duration="9235000" />
       <workItem from="1608284375840" duration="3318000" />
-      <workItem from="1608293476581" duration="12700000" />
+      <workItem from="1608293476581" duration="13857000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -282,7 +280,14 @@
       <option name="project" value="LOCAL" />
       <updated>1608307329414</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Ready for test">
+      <created>1608325255496</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1608325255496</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -310,6 +315,7 @@
     <MESSAGE value="set limit on block actions to 20_000" />
     <MESSAGE value="set limit on block actions to 100_000" />
     <MESSAGE value="node test" />
-    <option name="LAST_COMMIT_MESSAGE" value="node test" />
+    <MESSAGE value="Ready for test" />
+    <option name="LAST_COMMIT_MESSAGE" value="Ready for test" />
   </component>
 </project>
