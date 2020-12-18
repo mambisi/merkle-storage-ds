@@ -13,7 +13,9 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="testing" />
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="set limit on block actions to 20_000">
+      <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -143,7 +145,7 @@
       <workItem from="1608153866274" duration="2522000" />
       <workItem from="1608205182148" duration="9235000" />
       <workItem from="1608284375840" duration="3318000" />
-      <workItem from="1608293476581" duration="593000" />
+      <workItem from="1608293476581" duration="864000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -201,7 +203,21 @@
       <option name="project" value="LOCAL" />
       <updated>1608293937938</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="set limit on block actions">
+      <created>1608294163558</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1608294163558</updated>
+    </task>
+    <task id="LOCAL-00010" summary="set limit on block actions to 20_000">
+      <created>1608294298598</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1608294298598</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -225,6 +241,8 @@
     <MESSAGE value="fetch with reqwest" />
     <MESSAGE value="update" />
     <MESSAGE value="testing" />
-    <option name="LAST_COMMIT_MESSAGE" value="testing" />
+    <MESSAGE value="set limit on block actions" />
+    <MESSAGE value="set limit on block actions to 20_000" />
+    <option name="LAST_COMMIT_MESSAGE" value="set limit on block actions to 20_000" />
   </component>
 </project>

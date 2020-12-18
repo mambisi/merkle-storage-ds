@@ -105,7 +105,7 @@ async fn test_all_blocks() -> Result<(), Box<dyn std::error::Error>>{
     for block in &blocks {
         let block = block.as_object().unwrap();
         let block_hash = block.get("hash").unwrap().as_str();
-        let actions_url = format!("{}/dev/chains/main/actions/blocks/{}?limit=20000", base_url,block_hash.unwrap());
+        let actions_url = format!("{}/dev/chains/main/actions/blocks/{}?limit=100000", base_url,block_hash.unwrap());
         let mut messages = reqwest::get(&actions_url)
             .await?
             .json::<Vec<ContextActionJson>>()
