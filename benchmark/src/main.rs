@@ -131,7 +131,8 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
         if block_level % cycle == 0 {
             println!("Blocks Applied: {}", block_level);
             if cfg!(target_os = "linux") {
-                let out = Command::new("top").arg("-p").arg(process_id).output().await;
+                let pid = process_id.to_string();
+                let out = Command::new("top").arg("-p").arg(pid.as_str()).output().await;
                 match out {
                     Ok(o) => {
                         println!("{:?}", o)
