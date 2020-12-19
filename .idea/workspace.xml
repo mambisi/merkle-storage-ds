@@ -13,12 +13,8 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="readme update">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="Print storage stats">
       <change beforePath="$PROJECT_DIR$/merkle/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/merkle/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/database.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +67,7 @@
       <recent name="$PROJECT_DIR$/merkle/src" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Test merkle_storage::tests::get_test">
+  <component name="RunManager" selected="Cargo.Run">
     <configuration name="Run benchmark" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package benchmark --bin benchmark -- --cycle 100 -l 2 -n &quot;http://46.101.190.161:18732&quot; " />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -192,7 +188,7 @@
       <workItem from="1608205182148" duration="9235000" />
       <workItem from="1608284375840" duration="3318000" />
       <workItem from="1608293476581" duration="18539000" />
-      <workItem from="1608366422522" duration="2391000" />
+      <workItem from="1608366422522" duration="2479000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -369,7 +365,14 @@
       <option name="project" value="LOCAL" />
       <updated>1608353796581</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Print storage stats">
+      <created>1608369271010</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1608369271010</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -400,6 +403,7 @@
     <MESSAGE value="Ready for test" />
     <MESSAGE value="Readable" />
     <MESSAGE value="readme update" />
-    <option name="LAST_COMMIT_MESSAGE" value="readme update" />
+    <MESSAGE value="Print storage stats" />
+    <option name="LAST_COMMIT_MESSAGE" value="Print storage stats" />
   </component>
 </project>

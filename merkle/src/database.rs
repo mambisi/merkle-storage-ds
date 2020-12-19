@@ -7,7 +7,6 @@ use std::collections::{HashMap, BTreeMap};
 use crate::db_iterator::{DBIterator, DBIterationHandler};
 use crate::ivec::IVec;
 use serde::{Serialize,Deserialize};
-use zerocopy::AsBytes;
 
 #[derive(Debug, Default, Clone)]
 pub struct Batch {
@@ -154,8 +153,8 @@ impl DB {
         let mut byte_count = 0;
 
         for (k,v) in &self.inner {
-            byte_count += k.as_bytes().len();
-            byte_count += v.as_bytes().len();
+            byte_count += k.len();
+            byte_count += v.len();
         }
 
         byte_count
