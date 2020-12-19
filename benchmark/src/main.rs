@@ -68,6 +68,7 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
     let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, blocks_limit + 10, blocks_limit);
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
+    let mut current_cycle = 0;
 
     let mut blocks = reqwest::get(&blocks_url)
         .await?
@@ -128,8 +129,9 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             };
         }
 
-        if block_level % cycle == 0 {
-            println!("Blocks Applied: {}", block_level);
+        if block_level != 0 && block_level % cycle == 0 {
+            current_cycle += 1;
+            println!("Memory stats at cycle: {}", current_cycle);
             let pid = process_id.to_string();
             if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
                 let output = Command::new("ps")
