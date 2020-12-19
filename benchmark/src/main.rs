@@ -132,6 +132,12 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
         if block_level != 0 && block_level % cycle == 0 {
             current_cycle += 1;
             println!("Memory stats at cycle: {}", current_cycle);
+            match storage.get_merkle_stats(){
+                Ok(stats) => {
+                    println!("{:#?}", stats)
+                }
+                Err(_) => {}
+            };
             let pid = process_id.to_string();
             if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
                 let output = Command::new("ps")

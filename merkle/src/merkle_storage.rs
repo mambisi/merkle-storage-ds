@@ -55,7 +55,7 @@ use std::convert::TryInto;
 use sodiumoxide::crypto::generichash::State;
 use crate::codec::BincodeEncoded;
 use crate::schema::KeyValueSchema;
-use crate::database::{KeyValueStoreWithSchema, Batch, DB};
+use crate::database::{KeyValueStoreWithSchema, Batch, DB, DBStats};
 use crate::database::DBError;
 const HASH_LEN: usize = 32;
 
@@ -155,7 +155,8 @@ pub struct MerklePerfStats {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct MerkleStorageStats {
-    map_stats: MerkleMapStats,
+    pub db_stats : DBStats,
+    pub map_stats: MerkleMapStats,
     pub perf_stats: MerklePerfStats,
 }
 
@@ -642,7 +643,9 @@ impl MerkleStorage {
             avg_set_exec_time_ns = self.cumul_set_exec_time / ((self.set_exec_times - self.set_exec_times_to_discard) as f64);
         }
         let perf = MerklePerfStats { avg_set_exec_time_ns: avg_set_exec_time_ns };
-        Ok(MerkleStorageStats { map_stats: self.map_stats, perf_stats: perf })
+        let db_reader = self.db.read().unwrap();
+        let db_stats = db_reader.get_mem_use_stats().unwrap_or(DBStats{ db_size: 0, keys: 0 });
+        Ok(MerkleStorageStats { db_stats, map_stats: self.map_stats, perf_stats: perf })
     }
 }
 
@@ -741,6 +744,7 @@ mod tests {
             commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
         }
 
+        println!("{:#?}", storage.get_merkle_stats());
         assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
         assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
         assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![5u8]);
@@ -953,6 +957,8 @@ mod tests {
         storage.set(&vec!["data".to_string(), "b".to_string(), "x".to_string(), "y".to_string()], &vec![7, 8]);
         storage.set(&vec!["data".to_string(), "c".to_string()], &vec![2, 5]);
         storage.set(&vec!["adata".to_string(), "b".to_string(), "x".to_string(), "y".to_string()], &vec![12, 15]);
+
+        println!("{:#?}", storage.get_merkle_stats());
 
         let commit = storage.commit(0, "Tezos".to_string(), "Genesis".to_string()).unwrap();
         let rv_all =  storage.get_key_values_by_prefix(&EntryHash::decode(&commit).unwrap(),&vec![]).unwrap();

@@ -6,7 +6,8 @@ use crate::db_iterator;
 use std::collections::{HashMap, BTreeMap};
 use crate::db_iterator::{DBIterator, DBIterationHandler};
 use crate::ivec::IVec;
-
+use serde::{Serialize,Deserialize};
+use zerocopy::AsBytes;
 
 #[derive(Debug, Default, Clone)]
 pub struct Batch {
@@ -40,7 +41,6 @@ impl From<SchemaError> for DBError {
 
 #[derive(Debug, Fail)]
 pub enum DBError {
-
     #[fail(display = "Not found error")]
     NotFoundErr,
 
@@ -49,13 +49,17 @@ pub enum DBError {
         error: SchemaError
     },
 }
+
 impl slog::Value for DBError {
     fn serialize(&self, _record: &slog::Record, key: slog::Key, serializer: &mut dyn slog::Serializer) -> slog::Result {
         serializer.emit_arguments(key, &format_args!("{}", self))
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DBStats {
+    pub db_size: usize,
+    pub keys : usize
 }
 
 
@@ -129,7 +133,7 @@ impl<'a, S: KeyValueSchema> Iterator for IteratorWithSchema<'a, S> {
     type Item = (Result<S::Key, SchemaError>, Result<S::Value, SchemaError>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let (k,v) = match self.0.next() {
+        let (k, v) = match self.0.next() {
             None => {
                 return None;
             }
@@ -142,11 +146,23 @@ impl<'a, S: KeyValueSchema> Iterator for IteratorWithSchema<'a, S> {
 }
 
 pub struct DB {
-    pub(crate) inner : BTreeMap<IVec,IVec>
+    pub(crate) inner: BTreeMap<IVec, IVec>
 }
 
 impl DB {
+    pub fn db_size(&self) -> usize {
+        let mut byte_count = 0;
 
+        for (k,v) in &self.inner {
+            byte_count += k.as_bytes().len();
+            byte_count += v.as_bytes().len();
+        }
+
+        byte_count
+    }
+}
+
+impl DB {
     pub fn new() -> Self {
         DB {
             inner: BTreeMap::new()
@@ -154,14 +170,13 @@ impl DB {
     }
 
     pub(crate) fn apply_batch(&mut self, batch: Batch) {
-        self.inner.extend(batch.writes.iter().map(|(k,v)|{
-
+        self.inner.extend(batch.writes.iter().map(|(k, v)| {
             match v {
                 None => {
-                    (k.clone(),IVec::default())
+                    (k.clone(), IVec::default())
                 }
                 Some(v) => {
-                    (k.clone(),v.clone())
+                    (k.clone(), v.clone())
                 }
             }
         }))
@@ -262,7 +277,10 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
     }
 
     fn get_mem_use_stats(&self) -> Result<DBStats, DBError> {
-        Ok(DBStats {})
+        Ok(DBStats {
+            db_size: self.db_size(),
+            keys : self.inner.len()
+        })
     }
 }
 
