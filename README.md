@@ -49,3 +49,17 @@ cd benchmark
 ````shell script
 SODIUM_USE_PKG_CONFIG=1 cargo run
 ````
+
+````shell
+USAGE:
+    benchmark [OPTIONS]
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -c, --cycle <CYCLE>    Cycle length, logs the memory usage at every cycle [default: 4096]
+    -l, --limit <LIMIT>    Specifies the block height limit [default: 25000]
+    -n, --node <NODE>      Node base url [default: http://127.0.0.1:18732]
+````
