@@ -75,8 +75,8 @@
       </method>
     </configuration>
     <configuration name="Run benchmark" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="command" value="run --package benchmark --bin benchmark" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$/merkle" />
+      <option name="command" value="run --package benchmark --bin benchmark -- --cycle 100 -l 2 -n &quot;http://46.101.190.161:18732&quot; " />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <option name="channel" value="DEFAULT" />
       <option name="allFeatures" value="false" />
       <option name="emulateTerminal" value="false" />
@@ -130,6 +130,12 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Cargo.Run" />
+      <item itemvalue="Cargo.Run benchmark" />
+      <item itemvalue="Cargo.Test merkle_storage::tests" />
+      <item itemvalue="Cargo.Test merkle_storage::tests::test_get_context_tree_by_prefix" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Cargo.Test merkle_storage::tests" />
@@ -166,7 +172,7 @@
       <workItem from="1608153866274" duration="2522000" />
       <workItem from="1608205182148" duration="9235000" />
       <workItem from="1608284375840" duration="3318000" />
-      <workItem from="1608293476581" duration="16359000" />
+      <workItem from="1608293476581" duration="17699000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -315,7 +321,14 @@
       <option name="project" value="LOCAL" />
       <updated>1608331777522</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Ready for test">
+      <created>1608333105155</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1608333105155</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
