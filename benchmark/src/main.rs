@@ -21,6 +21,7 @@ use tokio::process::Command;
 use std::process::Output;
 use tokio::io::Error;
 use tokio::macros::support::Future;
+use tracing::stdlib::ptr::drop_in_place;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -74,15 +75,18 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
         .await?
         .json::<Vec<Value>>()
         .await?;
+
     blocks.reverse();
 
-    for block in &blocks {
+    for block in blocks {
         let block = block.as_object().unwrap();
         let block_hash = block.get("hash").unwrap().as_str();
         let block_header = block.get("header").unwrap().as_object().unwrap();
         let block_level = block_header.get("level").unwrap().as_u64().unwrap();
         let block_hash = block_hash.unwrap();
         let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", node, block_hash);
+
+
         let mut messages = reqwest::get(&actions_url)
             .await?
             .json::<Vec<ContextActionJson>>()
@@ -132,7 +136,7 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
         if block_level != 0 && block_level % cycle == 0 {
             current_cycle += 1;
             println!("Memory stats at cycle: {}", current_cycle);
-            match storage.get_merkle_stats(){
+            match storage.get_merkle_stats() {
                 Ok(stats) => {
                     println!("{:#?}", stats)
                 }
@@ -148,13 +152,12 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                     .output().await;
                 match output {
                     Ok(output) => {
-                        println!("{}",String::from_utf8_lossy(&output.stdout))
+                        println!("{}", String::from_utf8_lossy(&output.stdout))
                     }
                     Err(_) => {
                         println!("Error executing PS")
                     }
                 }
-
             }
         }
     }
