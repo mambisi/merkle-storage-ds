@@ -58,6 +58,7 @@ use crate::schema::KeyValueSchema;
 use crate::database::{KeyValueStoreWithSchema, Batch, DB, DBStats};
 use crate::database::DBError;
 use failure::_core::fmt::Formatter;
+use std::collections::hash_map::RandomState;
 
 const HASH_LEN: usize = 32;
 
@@ -97,20 +98,58 @@ enum Entry {
 
 pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + Send;
 
-#[derive(Debug)]
 struct GC {
+    db: Arc<RwLock<MerkleStorageKV>>,
     blocks: HashMap<EntryHash, HashSet<EntryHash>>,
+    trash : Vec<EntryHash>
 }
 
 impl GC {
+    fn new(db : Arc<RwLock<MerkleStorageKV>>) -> GC {
+        GC {
+            blocks: Default::default(),
+            trash : Vec::new(),
+            db
+        }
+    }
+
+    /// insertion / update O(1)
     fn update(&mut self, e: EntryHash, r: Option<EntryHash>) {
         match r {
             None => {}
             Some(r) => {
                 let refs = self.blocks.entry(e).or_insert(HashSet::new());
                 refs.insert(r);
+
+                let rev_refs = self.blocks.entry(r).or_insert(HashSet::new());
+                rev_refs.insert(e);
             }
         }
+    }
+
+    fn delete(&mut self, e: EntryHash) {
+        if let Some(d) = self.blocks.remove(&e) {
+            for r in d.iter() {
+                match self.blocks.get_mut(r) {
+                    None => {}
+                    Some(refs) => {
+                        refs.remove(&e);
+                        if refs.is_empty() {
+                            self.trash.push(r.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn clean(&mut self) {
+        for e in self.trash.iter() {
+            self.blocks.remove(e);
+            let mut db_writer = self.db.write().unwrap();
+            db_writer.delete(e);
+        }
+        self.trash.clear()
     }
 }
 
@@ -207,10 +246,8 @@ impl KeyValueSchema for MerkleStorage {
 impl MerkleStorage {
     pub fn new(db: Arc<RwLock<DB>>) -> Self {
         MerkleStorage {
-            db,
-            gc: GC {
-                blocks: Default::default(),
-            },
+            db : db.clone(),
+            gc: GC::new(db),
             staged: HashMap::new(),
             current_stage_tree: None,
             last_commit: None,
@@ -526,7 +563,7 @@ impl MerkleStorage {
     fn gc_entries_recursively(&mut self, entry: &Entry) {
         let k = &self.hash_entry(entry);
         match entry {
-            Entry::Blob(_) => { }
+            Entry::Blob(_) => {}
             Entry::Tree(tree) => {
                 tree.iter().for_each(|(key, child_node)| {
                     self.gc.update(child_node.entry_hash, Some(k.clone()));
@@ -536,7 +573,40 @@ impl MerkleStorage {
                     };
                 });
             }
-            Entry::Commit(_) => {}
+            Entry::Commit(commit) => {
+                self.gc.update(commit.root_hash, Some(k.clone()));
+                match self.get_entry(&commit.root_hash) {
+                    Err(_) => {}
+                    Ok(entry) => {
+                        self.gc_entries_recursively(&entry)
+                    }
+                }
+            }
+        }
+    }
+
+    fn delete_entries_recursively(&mut self, entry: &Entry) {
+        let k = &self.hash_entry(entry);
+        match entry {
+            Entry::Blob(_) => {}
+            Entry::Tree(tree) => {
+                tree.iter().for_each(|(key, child_node)| {
+                    self.gc.delete(child_node.entry_hash);
+                    match self.get_entry(&child_node.entry_hash) {
+                        Err(_) => {}
+                        Ok(entry) => self.gc_entries_recursively(&entry),
+                    };
+                });
+            }
+            Entry::Commit(commit) => {
+                self.gc.delete(commit.root_hash);
+                match self.get_entry(&commit.root_hash) {
+                    Err(_) => {}
+                    Ok(entry) => {
+                        self.gc_entries_recursively(&entry)
+                    }
+                }
+            }
         }
     }
 
@@ -802,21 +872,32 @@ mod tests {
             commit1 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
 
             storage.set(key_az, &vec![3u8]);
-            storage.set(key_abx, &vec![3u8]);
-            storage.set(key_d, &vec![3u8]);
-            storage.set(key_eab, &vec![3u8]);
-            assert_eq!(storage.get(key_abx).unwrap(), vec![3u8]);
+            storage.set(key_abx, &vec![8u8]);
+            storage.set(key_d, &vec![1u8]);
+            storage.set(key_eab, &vec![4u8]);
+            assert_eq!(storage.get(key_abx).unwrap(), vec![8u8]);
             commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
         }
 
         println!("{:#?}", storage.get_merkle_stats());
         println!("{}", storage.gc);
-        assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
-        assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
-        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![3u8]);
+        let commit_entry = storage.get_entry(&commit1).unwrap();
+        storage.delete_entries_recursively(&commit_entry);
+
+        println!("{:?}", storage.gc.trash);
+
+        println!("{}", storage.gc);
+
+        storage.gc.clean();
+
+        //assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
+        //assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
+        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![8u8]);
         assert_eq!(storage.get_history(&commit2, key_az).unwrap(), vec![3u8]);
-        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![3u8]);
-        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![3u8]);
+        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![1u8]);
+        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![4u8]);
+
+        println!("{}", storage.gc);
     }
 
     fn clean_db() {}
