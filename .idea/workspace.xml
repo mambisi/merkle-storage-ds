@@ -13,8 +13,9 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="tests clean up">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="clean up">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -73,7 +74,7 @@
       <recent name="$PROJECT_DIR$/merkle/src" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Test merkle_storage::tests::get_test">
+  <component name="RunManager" selected="Cargo.Test merkle_storage::tests::garbage_test">
     <configuration name="Run benchmark" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package benchmark --bin benchmark -- --cycle 100 -l 2 -n &quot;http://46.101.190.161:18732&quot; " />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -102,8 +103,8 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Test merkle_storage::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package merkle --lib merkle_storage::tests" />
+    <configuration name="Test merkle_storage::tests::garbage_test" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package merkle --lib merkle_storage::tests::garbage_test -- --exact" />
       <option name="workingDirectory" value="file://$PROJECT_DIR$/merkle" />
       <option name="channel" value="DEFAULT" />
       <option name="allFeatures" value="false" />
@@ -180,19 +181,19 @@
     <list>
       <item itemvalue="Cargo.Run" />
       <item itemvalue="Cargo.Run benchmark" />
-      <item itemvalue="Cargo.Test merkle_storage::tests" />
       <item itemvalue="Cargo.Test merkle_storage::tests::test_get_context_tree_by_prefix" />
       <item itemvalue="Cargo.Test merkle_storage::tests::get_test" />
       <item itemvalue="Cargo.Test merkle_storage::tests::test_persistence_over_reopens" />
       <item itemvalue="Cargo.Test merkle_storage::tests::test_multiple_commit_hash" />
+      <item itemvalue="Cargo.Test merkle_storage::tests::garbage_test" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Test merkle_storage::tests::garbage_test" />
         <item itemvalue="Cargo.Test merkle_storage::tests::get_test" />
         <item itemvalue="Cargo.Test merkle_storage::tests::test_get_context_tree_by_prefix" />
         <item itemvalue="Cargo.Test merkle_storage::tests::test_multiple_commit_hash" />
         <item itemvalue="Cargo.Test merkle_storage::tests::test_persistence_over_reopens" />
-        <item itemvalue="Cargo.Test merkle_storage::tests" />
       </list>
     </recent_temporary>
   </component>
@@ -228,7 +229,7 @@
       <workItem from="1608293476581" duration="18539000" />
       <workItem from="1608366422522" duration="3116000" />
       <workItem from="1608538978725" duration="1889000" />
-      <workItem from="1608567834289" duration="20518000" />
+      <workItem from="1608567834289" duration="27932000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -454,7 +455,14 @@
       <option name="project" value="LOCAL" />
       <updated>1608653974744</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="clean up">
+      <created>1608660876551</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1608660876551</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -490,6 +498,7 @@
     <MESSAGE value="consume block array" />
     <MESSAGE value="rough implementation, needs clean up" />
     <MESSAGE value="tests clean up" />
-    <option name="LAST_COMMIT_MESSAGE" value="tests clean up" />
+    <MESSAGE value="clean up" />
+    <option name="LAST_COMMIT_MESSAGE" value="clean up" />
   </component>
 </project>

@@ -53,12 +53,13 @@ use std::time::Instant;
 use crate::hash::HashType;
 use std::convert::TryInto;
 use sodiumoxide::crypto::generichash::State;
-use crate::codec::BincodeEncoded;
+use crate::codec::{BincodeEncoded, SchemaError};
 use crate::schema::KeyValueSchema;
-use crate::database::{KeyValueStoreWithSchema, Batch, DB, DBStats};
+use crate::database::{KeyValueStoreWithSchema, Batch, DB, DBStats, IteratorMode};
 use crate::database::DBError;
 use failure::_core::fmt::Formatter;
 use std::collections::hash_map::RandomState;
+use linked_hash_set::LinkedHashSet;
 
 const HASH_LEN: usize = 32;
 
@@ -101,15 +102,15 @@ pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + S
 struct GC {
     db: Arc<RwLock<MerkleStorageKV>>,
     blocks: HashMap<EntryHash, HashSet<EntryHash>>,
-    trash : Vec<EntryHash>
+    trash: Vec<EntryHash>,
 }
 
 impl GC {
-    fn new(db : Arc<RwLock<MerkleStorageKV>>) -> GC {
+    fn new(db: Arc<RwLock<MerkleStorageKV>>) -> GC {
         GC {
             blocks: Default::default(),
-            trash : Vec::new(),
-            db
+            trash: Vec::new(),
+            db,
         }
     }
 
@@ -135,6 +136,7 @@ impl GC {
                         refs.remove(&e);
                         if refs.is_empty() {
                             self.trash.push(r.clone());
+                            self.trash.push(e);
                         }
                     }
                 }
@@ -167,13 +169,13 @@ impl std::fmt::Display for GC {
 pub struct MerkleStorage {
     current_stage_tree: Option<Tree>,
     db: Arc<RwLock<MerkleStorageKV>>,
+    // Track commits
+    commits : LinkedHashSet<EntryHash>,
     staged: HashMap<EntryHash, Entry>,
     last_commit: Option<Commit>,
     map_stats: MerkleMapStats,
     cumul_set_exec_time: f64,
     gc: GC,
-    commits : usize,
-    remove_after_commits : usize,
     // divide this by the next field to get avg time spent in _set
     set_exec_times: u64,
     set_exec_times_to_discard: u64, // first N measurements to discard
@@ -247,12 +249,11 @@ impl KeyValueSchema for MerkleStorage {
 impl MerkleStorage {
     pub fn new(db: Arc<RwLock<DB>>) -> Self {
         MerkleStorage {
-            db : db.clone(),
+            db: db.clone(),
+            commits : LinkedHashSet::new(),
             gc: GC::new(db),
             staged: HashMap::new(),
             current_stage_tree: None,
-            commits : 0,
-            remove_after_commits : 1,
             last_commit: None,
             map_stats: MerkleMapStats { staged_area_elems: 0, current_tree_elems: 0 },
             cumul_set_exec_time: 0.0,
@@ -361,6 +362,8 @@ impl MerkleStorage {
         }
     }
 
+
+
     /// Flush the staging area and and move to work on a certain commit from history.
     pub fn checkout(&mut self, context_hash: &EntryHash) -> Result<(), MerkleError> {
         let commit = self.get_commit(&context_hash)?;
@@ -399,9 +402,14 @@ impl MerkleStorage {
         self.gc_entries_recursively(&entry);
 
 
+
         self.staged = HashMap::new();
         self.map_stats.staged_area_elems = 0;
         self.last_commit = Some(new_commit.clone());
+        self.commits.insert(self.hash_commit(&new_commit));
+
+        self.clear_previous_commits();
+        println!("{}", self.gc);
         Ok(self.hash_commit(&new_commit))
     }
 
@@ -565,7 +573,9 @@ impl MerkleStorage {
     fn gc_entries_recursively(&mut self, entry: &Entry) {
         let k = &self.hash_entry(entry);
         match entry {
-            Entry::Blob(_) => {}
+            Entry::Blob(b) => {
+                self.gc.update(self.hash_blob(b), Some(k.clone()));
+            }
             Entry::Tree(tree) => {
                 tree.iter().for_each(|(key, child_node)| {
                     self.gc.update(child_node.entry_hash, Some(k.clone()));
@@ -590,7 +600,9 @@ impl MerkleStorage {
     fn delete_entries_recursively(&mut self, entry: &Entry) {
         let k = &self.hash_entry(entry);
         match entry {
-            Entry::Blob(_) => {}
+            Entry::Blob(b) => {
+                self.gc.delete(self.hash_blob(b));
+            }
             Entry::Tree(tree) => {
                 tree.iter().for_each(|(key, child_node)| {
                     self.gc.delete(child_node.entry_hash);
@@ -657,6 +669,21 @@ impl MerkleStorage {
             Entry::Tree(tree) => self.hash_tree(&tree),
             Entry::Blob(blob) => self.hash_blob(blob),
         }
+    }
+
+    fn clear_previous_commits(&mut self) -> Result<(), MerkleError> {
+        let mut commits = self.commits.clone();
+
+        if let Some(last_commit) = &self.last_commit {
+            commits.remove(&self.hash_commit(last_commit));
+        }
+
+        for entry_hash in commits.iter() {
+            let entry = self.get_entry(entry_hash)?;
+            self.delete_entries_recursively(&entry)
+        }
+        self.gc.clean();
+        Ok(())
     }
 
     fn hash_commit(&self, commit: &Commit) -> EntryHash {
@@ -796,7 +823,9 @@ mod tests {
     * Tests need to run sequentially, otherwise they will try to open RocksDB at the same time.
     */
     fn get_storage() -> MerkleStorage { MerkleStorage::new(Arc::new(RwLock::new(DB::new()))) }
+    fn clean_db() {
 
+    }
 
     #[test]
     #[serial]
@@ -864,7 +893,6 @@ mod tests {
         let mut storage = get_storage();
 
         {
-
             storage.set(key_abc, &vec![1u8, 2u8]);
             storage.set(key_abx, &vec![3u8]);
             assert_eq!(storage.get(&key_abc).unwrap(), vec![1u8, 2u8]);
@@ -879,6 +907,7 @@ mod tests {
             commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
         }
 
+        storage.clear_previous_commits();
         println!("{:#?}", storage.get_merkle_stats());
         assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
         assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
@@ -888,7 +917,55 @@ mod tests {
         assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![7u8]);
     }
 
-    fn clean_db() {}
+    #[test]
+    #[serial]
+    fn garbage_test() {
+        clean_db();
+
+        let commit1;
+        let commit2;
+        let key_abc: &ContextKey = &vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let key_abx: &ContextKey = &vec!["a".to_string(), "b".to_string(), "x".to_string()];
+        let key_eab: &ContextKey = &vec!["e".to_string(), "a".to_string(), "b".to_string()];
+        let key_az: &ContextKey = &vec!["a".to_string(), "z".to_string()];
+        let key_d: &ContextKey = &vec!["d".to_string()];
+
+        let mut storage = get_storage();
+
+        {
+            storage.set(key_abc, &vec![1u8, 2u8]);
+            storage.set(key_abx, &vec![3u8]);
+            assert_eq!(storage.get(&key_abc).unwrap(), vec![1u8, 2u8]);
+            assert_eq!(storage.get(&key_abx).unwrap(), vec![3u8]);
+            commit1 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
+            println!("{}", storage.gc);
+            println!();
+            storage.set(key_az, &vec![4u8]);
+            storage.set(key_abx, &vec![5u8]);
+            storage.set(key_d, &vec![6u8]);
+            storage.set(key_eab, &vec![7u8]);
+            assert_eq!(storage.get(key_abx).unwrap(), vec![5u8]);
+            commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
+            print!("{}", storage.gc);
+        }
+        println!("{:#?}", storage.get_merkle_stats());
+        storage.clear_previous_commits();
+        println!("{:#?}", storage.get_merkle_stats());
+        println!("{:#?}", storage.get(key_abc));
+
+       // println!("{}", storage.);
+
+        /*
+
+        assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
+        assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
+        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![5u8]);
+        assert_eq!(storage.get_history(&commit2, key_az).unwrap(), vec![4u8]);
+        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![6u8]);
+        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![7u8]);
+
+         */
+    }
 
     #[test]
     #[serial]
