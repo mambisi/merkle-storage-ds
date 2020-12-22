@@ -843,9 +843,6 @@ mod tests {
         storage.delete(&vec!["data".to_string(), "b".to_string(), "x".to_string()]);
         let commit = storage.commit(
             0, "Tezos".to_string(), "".to_string());
-
-        println!("{}", storage.gc);
-
         assert_eq!([0x9B, 0xB0, 0x0D, 0x6E], commit.unwrap()[0..4]);
     }
 
@@ -865,39 +862,28 @@ mod tests {
         let mut storage = get_storage();
 
         {
+
             storage.set(key_abc, &vec![1u8, 2u8]);
             storage.set(key_abx, &vec![3u8]);
             assert_eq!(storage.get(&key_abc).unwrap(), vec![1u8, 2u8]);
             assert_eq!(storage.get(&key_abx).unwrap(), vec![3u8]);
             commit1 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
 
-            storage.set(key_az, &vec![3u8]);
-            storage.set(key_abx, &vec![8u8]);
-            storage.set(key_d, &vec![1u8]);
-            storage.set(key_eab, &vec![4u8]);
-            assert_eq!(storage.get(key_abx).unwrap(), vec![8u8]);
+            storage.set(key_az, &vec![4u8]);
+            storage.set(key_abx, &vec![5u8]);
+            storage.set(key_d, &vec![6u8]);
+            storage.set(key_eab, &vec![7u8]);
+            assert_eq!(storage.get(key_abx).unwrap(), vec![5u8]);
             commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
         }
 
         println!("{:#?}", storage.get_merkle_stats());
-        println!("{}", storage.gc);
-        let commit_entry = storage.get_entry(&commit1).unwrap();
-        storage.delete_entries_recursively(&commit_entry);
-
-        println!("{:?}", storage.gc.trash);
-
-        println!("{}", storage.gc);
-
-        storage.gc.clean();
-
-        //assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
-        //assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
-        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![8u8]);
-        assert_eq!(storage.get_history(&commit2, key_az).unwrap(), vec![3u8]);
-        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![1u8]);
-        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![4u8]);
-
-        println!("{}", storage.gc);
+        assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
+        assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
+        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![5u8]);
+        assert_eq!(storage.get_history(&commit2, key_az).unwrap(), vec![4u8]);
+        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![6u8]);
+        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![7u8]);
     }
 
     fn clean_db() {}
@@ -1049,8 +1035,6 @@ mod tests {
         storage.set(&vec!["adata".to_string(), "b".to_string(), "x".to_string(), "y".to_string()], &vec![12, 15]);
 
         let commit = storage.commit(0, "Tezos".to_string(), "Genesis".to_string()).unwrap();
-
-        println!("{}", storage.gc);
 
         let rv_all = storage.get_key_values_by_prefix(&EntryHash::decode(&commit).unwrap(), &vec![]).unwrap();
         let rv_data = storage.get_key_values_by_prefix(&EntryHash::decode(&commit).unwrap(), &vec!["data".to_string()]).unwrap();
