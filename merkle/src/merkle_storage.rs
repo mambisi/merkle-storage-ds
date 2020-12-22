@@ -46,7 +46,7 @@ use std::hash::Hash;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
-use im::OrdMap;
+use im::{OrdMap, HashSet};
 use failure::Fail;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
@@ -57,6 +57,8 @@ use crate::codec::BincodeEncoded;
 use crate::schema::KeyValueSchema;
 use crate::database::{KeyValueStoreWithSchema, Batch, DB, DBStats};
 use crate::database::DBError;
+use failure::_core::fmt::Formatter;
+
 const HASH_LEN: usize = 32;
 
 pub type ContextKey = Vec<String>;
@@ -95,6 +97,35 @@ enum Entry {
 
 pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + Send;
 
+#[derive(Debug)]
+struct GC {
+    blocks: HashMap<EntryHash, HashSet<EntryHash>>,
+}
+
+impl GC {
+    fn update(&mut self, e: EntryHash, r: Option<EntryHash>) {
+        match r {
+            None => {}
+            Some(r) => {
+                let refs = self.blocks.entry(e).or_insert(HashSet::new());
+                refs.insert(r);
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for GC {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut display = String::new();
+        self.blocks.iter().for_each(|(k, v)| {
+            display.push_str(&format!("{:?} : {} \n", k, v.len()));
+        }
+        );
+
+        write!(f, "{}", display)
+    }
+}
+
 pub struct MerkleStorage {
     current_stage_tree: Option<Tree>,
     db: Arc<RwLock<MerkleStorageKV>>,
@@ -102,6 +133,7 @@ pub struct MerkleStorage {
     last_commit: Option<Commit>,
     map_stats: MerkleMapStats,
     cumul_set_exec_time: f64,
+    gc: GC,
     // divide this by the next field to get avg time spent in _set
     set_exec_times: u64,
     set_exec_times_to_discard: u64, // first N measurements to discard
@@ -113,7 +145,7 @@ pub enum MerkleError {
     #[fail(display = "Serialization error: {:?}", error)]
     SerializationError { error: bincode::Error },
     #[fail(display = "SledDB error: {:?}", error)]
-    DBError { error : DBError},
+    DBError { error: DBError },
     /// Internal unrecoverable bugs that should never occur
     #[fail(display = "No root retrieved for this commit!")]
     CommitRootNotFound,
@@ -155,7 +187,7 @@ pub struct MerklePerfStats {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct MerkleStorageStats {
-    pub db_stats : DBStats,
+    pub db_stats: DBStats,
     pub map_stats: MerkleMapStats,
     pub perf_stats: MerklePerfStats,
 }
@@ -176,6 +208,9 @@ impl MerkleStorage {
     pub fn new(db: Arc<RwLock<DB>>) -> Self {
         MerkleStorage {
             db,
+            gc: GC {
+                blocks: Default::default(),
+            },
             staged: HashMap::new(),
             current_stage_tree: None,
             last_commit: None,
@@ -321,6 +356,10 @@ impl MerkleStorage {
 
         self.put_to_staging_area(&self.hash_commit(&new_commit), entry.clone());
         self.persist_staged_entry_to_db(&entry)?;
+
+        let commit_root = self.get_entry(&new_commit.root_hash)?;
+        self.gc_entries_recursively(&commit_root);
+
         self.staged = HashMap::new();
         self.map_stats.staged_area_elems = 0;
         self.last_commit = Some(new_commit.clone());
@@ -478,8 +517,29 @@ impl MerkleStorage {
         // atomically write all entries in one batch to DB
         self.db.write().unwrap().write_batch(batch)?;
 
+
+        self.gc_entries_recursively(entry);
+
         Ok(())
     }
+
+    fn gc_entries_recursively(&mut self, entry: &Entry) {
+        let k = &self.hash_entry(entry);
+        match entry {
+            Entry::Blob(_) => { }
+            Entry::Tree(tree) => {
+                tree.iter().for_each(|(key, child_node)| {
+                    self.gc.update(child_node.entry_hash, Some(k.clone()));
+                    match self.get_entry(&child_node.entry_hash) {
+                        Err(_) => {}
+                        Ok(entry) => self.gc_entries_recursively(&entry),
+                    };
+                });
+            }
+            Entry::Commit(_) => {}
+        }
+    }
+
 
     /// Builds vector of entries to be persisted to DB, recursively
     fn get_entries_recursively(&self, entry: &Entry, batch: &mut Batch) -> Result<(), MerkleError> {
@@ -488,13 +548,17 @@ impl MerkleStorage {
 
         let k = &self.hash_entry(entry);
         let v = bincode::serialize(entry)?;
-        self.db.write().unwrap().put_batch(batch,k,&v);
+        self.db.write().unwrap().put_batch(batch, k, &v);
         match entry {
-            Entry::Blob(_) => Ok(()),
+            Entry::Blob(_) => {
+                //self.gc.update(k.clone(),None);
+                Ok(())
+            }
             Entry::Tree(tree) => {
                 // Go through all descendants and gather errors. Remap error if there is a failure
                 // anywhere in the recursion paths. TODO: is revert possible?
                 tree.iter().map(|(_, child_node)| {
+                    //self.gc.update(k.clone(),Some(child_node.entry_hash));
                     match self.staged.get(&child_node.entry_hash) {
                         None => Ok(()),
                         Some(entry) => self.get_entries_recursively(entry, batch),
@@ -644,7 +708,7 @@ impl MerkleStorage {
         }
         let perf = MerklePerfStats { avg_set_exec_time_ns: avg_set_exec_time_ns };
         let db_reader = self.db.read().unwrap();
-        let db_stats = db_reader.get_mem_use_stats().unwrap_or(DBStats{ db_size: 0, keys: 0 });
+        let db_stats = db_reader.get_mem_use_stats().unwrap_or(DBStats { db_size: 0, keys: 0 });
         Ok(MerkleStorageStats { db_stats, map_stats: self.map_stats, perf_stats: perf })
     }
 }
@@ -710,6 +774,8 @@ mod tests {
         let commit = storage.commit(
             0, "Tezos".to_string(), "".to_string());
 
+        println!("{}", storage.gc);
+
         assert_eq!([0x9B, 0xB0, 0x0D, 0x6E], commit.unwrap()[0..4]);
     }
 
@@ -729,33 +795,31 @@ mod tests {
         let mut storage = get_storage();
 
         {
-
             storage.set(key_abc, &vec![1u8, 2u8]);
             storage.set(key_abx, &vec![3u8]);
             assert_eq!(storage.get(&key_abc).unwrap(), vec![1u8, 2u8]);
             assert_eq!(storage.get(&key_abx).unwrap(), vec![3u8]);
             commit1 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
 
-            storage.set(key_az, &vec![4u8]);
-            storage.set(key_abx, &vec![5u8]);
-            storage.set(key_d, &vec![6u8]);
-            storage.set(key_eab, &vec![7u8]);
-            assert_eq!(storage.get(key_abx).unwrap(), vec![5u8]);
+            storage.set(key_az, &vec![3u8]);
+            storage.set(key_abx, &vec![3u8]);
+            storage.set(key_d, &vec![3u8]);
+            storage.set(key_eab, &vec![3u8]);
+            assert_eq!(storage.get(key_abx).unwrap(), vec![3u8]);
             commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
         }
 
         println!("{:#?}", storage.get_merkle_stats());
+        println!("{}", storage.gc);
         assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
         assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
-        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![5u8]);
-        assert_eq!(storage.get_history(&commit2, key_az).unwrap(), vec![4u8]);
-        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![6u8]);
-        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![7u8]);
+        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![3u8]);
+        assert_eq!(storage.get_history(&commit2, key_az).unwrap(), vec![3u8]);
+        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![3u8]);
+        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![3u8]);
     }
 
-    fn clean_db() {
-
-    }
+    fn clean_db() {}
 
     #[test]
     #[serial]
@@ -832,7 +896,6 @@ mod tests {
         let key_abx: &ContextKey = &vec!["a".to_string(), "b".to_string(), "x".to_string()];
         let mut storage = get_storage();
         {
-
             storage.set(key_abc, &vec![1u8]).unwrap();
             storage.set(key_abx, &vec![2u8]).unwrap();
             commit1 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
@@ -853,58 +916,6 @@ mod tests {
         assert_eq!(storage.get(&key_abx).unwrap(), vec![4u8]);
     }
 
-    #[test]
-    #[serial]
-    fn test_value_removal_from_commit() {
-        let mut storage = get_storage();
-        let _commit = storage.commit(
-            0, "Tezos".to_string(), "Genesis".to_string());
-
-        storage.set(&vec!["data".to_string(), "a".to_string(), "x".to_string()], &vec![97]);
-        let commit1 = storage.commit(
-            0, "Tezos".to_string(), "1".to_string());
-
-        storage.set(&vec!["data".to_string(), "a".to_string(), "x".to_string()], &vec![94]);
-        //storage.set(&vec!["data".to_string(), "a".to_string(), "b".to_string()], &vec![98]);
-
-        let commit2 = storage.commit(
-            0, "Tezos".to_string(), "2".to_string());
-
-        storage.set(&vec!["data".to_string(), "a".to_string(), "g".to_string()], &vec![95]);
-        //storage.set(&vec!["data".to_string(), "a".to_string(), "b".to_string()], &vec![98]);
-
-        let commit3 = storage.commit(
-            0, "Tezos".to_string(), "3".to_string());
-
-        /*
-        storage.copy(&vec!["data".to_string(), "a".to_string()], &vec!["data".to_string(), "b".to_string()]);
-        let commit3 = storage.commit(
-            0, "Tezos".to_string(), "3".to_string());
-
-        let result = storage.get_history(&commit1.unwrap(), &vec!["data".to_string(), "a".to_string(), "x".to_string()]);
-        let value_in_commit_1 = result.unwrap();
-        let commit_key = commit3.unwrap();
-        */
-
-        let commit_1 = storage.get_commit(&commit1.unwrap()).unwrap();
-        let commit_1_root_entry = storage.get_entry(&commit_1.root_hash).unwrap();
-
-
-        if let Entry::Tree(t) = &commit_1_root_entry {
-            for (k1, e) in t {
-                if e.node_kind == NodeKind::NonLeaf {
-                    if let Entry::Tree(t) = &storage.get_entry(&e.entry_hash).unwrap(){
-                        for (k2, e2) in t.iter() {
-                            println!("{:#?}", e2)
-                        }
-                    }
-                }
-            }
-        }
-
-        //let e = storage.get_from_tree(&commit_1.root_hash, &vec!["a".to_owned(),"x".to_owned()]);
-    }
-
 
     #[test]
     #[serial]
@@ -915,7 +926,6 @@ mod tests {
         let commit1;
         let mut storage = get_storage();
         {
-
             let key_abx: &ContextKey = &vec!["a".to_string(), "b".to_string(), "x".to_string()];
             storage.set(key_abc, &vec![2 as u8]).unwrap();
             storage.set(key_abx, &vec![3 as u8]).unwrap();
@@ -942,7 +952,6 @@ mod tests {
     // Test getting entire tree in string format for JSON RPC
     #[test]
     fn test_get_context_tree_by_prefix() {
-
         { clean_db(); }
 
         let all_json = "[[[\"adata\",\"b\",\"x\",\"y\"],[12,15]],[[\"data\",\"a\",\"x\",\"y\"],[5,6]],[[\"data\",\"b\",\"x\",\"y\"],[7,8]],[[\"data\",\"c\"],[2,5]]]";
@@ -958,13 +967,13 @@ mod tests {
         storage.set(&vec!["data".to_string(), "c".to_string()], &vec![2, 5]);
         storage.set(&vec!["adata".to_string(), "b".to_string(), "x".to_string(), "y".to_string()], &vec![12, 15]);
 
-        println!("{:#?}", storage.get_merkle_stats());
-
         let commit = storage.commit(0, "Tezos".to_string(), "Genesis".to_string()).unwrap();
-        let rv_all =  storage.get_key_values_by_prefix(&EntryHash::decode(&commit).unwrap(),&vec![]).unwrap();
-        let rv_data =  storage.get_key_values_by_prefix(&EntryHash::decode(&commit).unwrap(),&vec!["data".to_string()]).unwrap();
+
+        println!("{}", storage.gc);
+
+        let rv_all = storage.get_key_values_by_prefix(&EntryHash::decode(&commit).unwrap(), &vec![]).unwrap();
+        let rv_data = storage.get_key_values_by_prefix(&EntryHash::decode(&commit).unwrap(), &vec!["data".to_string()]).unwrap();
         assert_eq!(all_json, serde_json::to_string(&rv_all.unwrap()).unwrap());
         assert_eq!(data_json, serde_json::to_string(&rv_data.unwrap()).unwrap());
     }
-
 }

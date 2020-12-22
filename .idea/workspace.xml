@@ -13,9 +13,10 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="bug fix">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="consume block array">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/database.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +34,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="MacroExpansionManager">
@@ -68,7 +74,7 @@
       <recent name="$PROJECT_DIR$/merkle/src" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Run">
+  <component name="RunManager" selected="Cargo.Test merkle_storage::tests::get_test">
     <configuration name="Run benchmark" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package benchmark --bin benchmark -- --cycle 100 -l 2 -n &quot;http://46.101.190.161:18732&quot; " />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -139,17 +145,54 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Test merkle_storage::tests::test_multiple_commit_hash" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package merkle --lib merkle_storage::tests::test_multiple_commit_hash -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$/merkle" />
+      <option name="channel" value="DEFAULT" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Test merkle_storage::tests::test_persistence_over_reopens" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
+      <option name="command" value="test --package merkle --lib merkle_storage::tests::test_persistence_over_reopens -- --exact" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$/merkle" />
+      <option name="channel" value="DEFAULT" />
+      <option name="allFeatures" value="false" />
+      <option name="emulateTerminal" value="false" />
+      <option name="backtrace" value="SHORT" />
+      <envs />
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
+      <method v="2">
+        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <list>
       <item itemvalue="Cargo.Run" />
       <item itemvalue="Cargo.Run benchmark" />
       <item itemvalue="Cargo.Test merkle_storage::tests" />
       <item itemvalue="Cargo.Test merkle_storage::tests::test_get_context_tree_by_prefix" />
       <item itemvalue="Cargo.Test merkle_storage::tests::get_test" />
+      <item itemvalue="Cargo.Test merkle_storage::tests::test_persistence_over_reopens" />
+      <item itemvalue="Cargo.Test merkle_storage::tests::test_multiple_commit_hash" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Cargo.Test merkle_storage::tests::get_test" />
         <item itemvalue="Cargo.Test merkle_storage::tests::test_get_context_tree_by_prefix" />
+        <item itemvalue="Cargo.Test merkle_storage::tests::test_multiple_commit_hash" />
+        <item itemvalue="Cargo.Test merkle_storage::tests::test_persistence_over_reopens" />
         <item itemvalue="Cargo.Test merkle_storage::tests" />
       </list>
     </recent_temporary>
@@ -185,7 +228,8 @@
       <workItem from="1608284375840" duration="3318000" />
       <workItem from="1608293476581" duration="18539000" />
       <workItem from="1608366422522" duration="3116000" />
-      <workItem from="1608538978725" duration="1522000" />
+      <workItem from="1608538978725" duration="1889000" />
+      <workItem from="1608567834289" duration="14125000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -376,7 +420,21 @@
       <option name="project" value="LOCAL" />
       <updated>1608369500367</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="bug fix">
+      <created>1608542055872</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1608542055872</updated>
+    </task>
+    <task id="LOCAL-00029" summary="consume block array">
+      <created>1608542256734</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1608542256734</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -409,6 +467,7 @@
     <MESSAGE value="readme update" />
     <MESSAGE value="Print storage stats" />
     <MESSAGE value="bug fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="bug fix" />
+    <MESSAGE value="consume block array" />
+    <option name="LAST_COMMIT_MESSAGE" value="consume block array" />
   </component>
 </project>
