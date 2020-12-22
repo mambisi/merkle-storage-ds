@@ -13,7 +13,7 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="consume block array">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="tests clean up">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
@@ -228,7 +228,7 @@
       <workItem from="1608293476581" duration="18539000" />
       <workItem from="1608366422522" duration="3116000" />
       <workItem from="1608538978725" duration="1889000" />
-      <workItem from="1608567834289" duration="19424000" />
+      <workItem from="1608567834289" duration="20518000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -440,7 +440,21 @@
       <option name="project" value="LOCAL" />
       <updated>1608638577534</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="rough implementation, needs clean up">
+      <created>1608653787798</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1608653787798</updated>
+    </task>
+    <task id="LOCAL-00032" summary="tests clean up">
+      <created>1608653974744</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1608653974744</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -474,6 +488,8 @@
     <MESSAGE value="Print storage stats" />
     <MESSAGE value="bug fix" />
     <MESSAGE value="consume block array" />
-    <option name="LAST_COMMIT_MESSAGE" value="consume block array" />
+    <MESSAGE value="rough implementation, needs clean up" />
+    <MESSAGE value="tests clean up" />
+    <option name="LAST_COMMIT_MESSAGE" value="tests clean up" />
   </component>
 </project>

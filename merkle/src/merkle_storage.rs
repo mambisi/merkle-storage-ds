@@ -113,7 +113,6 @@ impl GC {
         }
     }
 
-    /// insertion / update O(1)
     fn update(&mut self, e: EntryHash, r: Option<EntryHash>) {
         match r {
             None => {}
@@ -173,6 +172,8 @@ pub struct MerkleStorage {
     map_stats: MerkleMapStats,
     cumul_set_exec_time: f64,
     gc: GC,
+    commits : usize,
+    remove_after_commits : usize,
     // divide this by the next field to get avg time spent in _set
     set_exec_times: u64,
     set_exec_times_to_discard: u64, // first N measurements to discard
@@ -250,6 +251,8 @@ impl MerkleStorage {
             gc: GC::new(db),
             staged: HashMap::new(),
             current_stage_tree: None,
+            commits : 0,
+            remove_after_commits : 1,
             last_commit: None,
             map_stats: MerkleMapStats { staged_area_elems: 0, current_tree_elems: 0 },
             cumul_set_exec_time: 0.0,
@@ -393,9 +396,8 @@ impl MerkleStorage {
 
         self.put_to_staging_area(&self.hash_commit(&new_commit), entry.clone());
         self.persist_staged_entry_to_db(&entry)?;
+        self.gc_entries_recursively(&entry);
 
-        let commit_root = self.get_entry(&new_commit.root_hash)?;
-        self.gc_entries_recursively(&commit_root);
 
         self.staged = HashMap::new();
         self.map_stats.staged_area_elems = 0;
