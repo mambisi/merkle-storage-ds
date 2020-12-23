@@ -127,16 +127,16 @@ impl GC {
         }
     }
 
-    fn delete(&mut self, e: EntryHash) {
-        if let Some(d) = self.blocks.remove(&e) {
+    fn delete(&mut self, e: &EntryHash) {
+        if let Some(d) = self.blocks.remove(e) {
             for r in d.iter() {
                 match self.blocks.get_mut(r) {
                     None => {}
                     Some(refs) => {
-                        refs.remove(&e);
+                        refs.remove(e);
                         if refs.is_empty() {
                             self.trash.push(r.clone());
-                            self.trash.push(e);
+                            self.trash.push(e.clone());
                         }
                     }
                 }
@@ -407,9 +407,6 @@ impl MerkleStorage {
         self.map_stats.staged_area_elems = 0;
         self.last_commit = Some(new_commit.clone());
         self.commits.insert(self.hash_commit(&new_commit));
-
-        self.clear_previous_commits();
-        println!("{}", self.gc);
         Ok(self.hash_commit(&new_commit))
     }
 
@@ -574,7 +571,6 @@ impl MerkleStorage {
         let k = &self.hash_entry(entry);
         match entry {
             Entry::Blob(b) => {
-                self.gc.update(self.hash_blob(b), Some(k.clone()));
             }
             Entry::Tree(tree) => {
                 tree.iter().for_each(|(key, child_node)| {
@@ -600,12 +596,10 @@ impl MerkleStorage {
     fn delete_entries_recursively(&mut self, entry: &Entry) {
         let k = &self.hash_entry(entry);
         match entry {
-            Entry::Blob(b) => {
-                self.gc.delete(self.hash_blob(b));
-            }
+            Entry::Blob(_) => {}
             Entry::Tree(tree) => {
+                self.gc.delete(k);
                 tree.iter().for_each(|(key, child_node)| {
-                    self.gc.delete(child_node.entry_hash);
                     match self.get_entry(&child_node.entry_hash) {
                         Err(_) => {}
                         Ok(entry) => self.gc_entries_recursively(&entry),
@@ -613,7 +607,6 @@ impl MerkleStorage {
                 });
             }
             Entry::Commit(commit) => {
-                self.gc.delete(commit.root_hash);
                 match self.get_entry(&commit.root_hash) {
                     Err(_) => {}
                     Ok(entry) => {
@@ -679,8 +672,9 @@ impl MerkleStorage {
         }
 
         for entry_hash in commits.iter() {
-            let entry = self.get_entry(entry_hash)?;
-            self.delete_entries_recursively(&entry)
+            let commit = self.get_commit(entry_hash)?;
+            let root_tree = self.get_tree(&commit.root_hash)?;
+            self.delete_entries_recursively(&Entry::Tree(root_tree))
         }
         self.gc.clean();
         Ok(())
@@ -938,23 +932,16 @@ mod tests {
             assert_eq!(storage.get(&key_abc).unwrap(), vec![1u8, 2u8]);
             assert_eq!(storage.get(&key_abx).unwrap(), vec![3u8]);
             commit1 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
-            println!("{}", storage.gc);
-            println!();
             storage.set(key_az, &vec![4u8]);
             storage.set(key_abx, &vec![5u8]);
             storage.set(key_d, &vec![6u8]);
             storage.set(key_eab, &vec![7u8]);
             assert_eq!(storage.get(key_abx).unwrap(), vec![5u8]);
             commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
-            print!("{}", storage.gc);
         }
-        println!("{:#?}", storage.get_merkle_stats());
+        println!("Before GC: {:#?}", storage.get_merkle_stats());
         storage.clear_previous_commits();
-        println!("{:#?}", storage.get_merkle_stats());
-        println!("{:#?}", storage.get(key_abc));
-
-       // println!("{}", storage.);
-
+        println!("After GC: {:#?}", storage.get_merkle_stats());
         /*
 
         assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
