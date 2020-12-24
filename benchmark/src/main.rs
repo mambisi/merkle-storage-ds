@@ -21,6 +21,7 @@ use tokio::process::Command;
 use std::process::Output;
 use tokio::io::Error;
 use tokio::macros::support::Future;
+use dashmap::DashMap;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -66,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
     let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, blocks_limit + 10, blocks_limit);
-    let db = Arc::new(RwLock::new(DB::new()));
+    let db = Arc::new(DashMap::new());
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0;
 
@@ -159,6 +160,10 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                     }
                 }
             }
+        }
+
+        if block_level != 0 && block_level % 5 == 0 {
+            storage.clear_previous_commits()
         }
     }
     Ok(())

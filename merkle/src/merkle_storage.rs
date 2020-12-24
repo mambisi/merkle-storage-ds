@@ -60,6 +60,7 @@ use crate::database::DBError;
 use failure::_core::fmt::Formatter;
 use std::collections::hash_map::RandomState;
 use linked_hash_set::LinkedHashSet;
+use dashmap::DashMap;
 
 const HASH_LEN: usize = 32;
 
@@ -100,13 +101,13 @@ enum Entry {
 pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + Send;
 
 struct GC {
-    db: Arc<RwLock<MerkleStorageKV>>,
+    db: Arc<DashMap<EntryHash,Vec<u8>>>,
     blocks: HashMap<EntryHash, HashSet<EntryHash>>,
     trash: Vec<EntryHash>,
 }
 
 impl GC {
-    fn new(db: Arc<RwLock<MerkleStorageKV>>) -> GC {
+    fn new(db: Arc<DashMap<EntryHash,Vec<u8>>>) -> GC {
         GC {
             blocks: Default::default(),
             trash: Vec::new(),
@@ -128,6 +129,7 @@ impl GC {
     }
 
     fn delete(&mut self, e: &EntryHash) {
+        self.trash.push(e.clone());
         if let Some(d) = self.blocks.remove(e) {
             for r in d.iter() {
                 match self.blocks.get_mut(r) {
@@ -136,7 +138,6 @@ impl GC {
                         refs.remove(e);
                         if refs.is_empty() {
                             self.trash.push(r.clone());
-                            self.trash.push(e.clone());
                         }
                     }
                 }
@@ -147,8 +148,7 @@ impl GC {
     fn clean(&mut self) {
         for e in self.trash.iter() {
             self.blocks.remove(e);
-            let mut db_writer = self.db.write().unwrap();
-            db_writer.delete(e);
+            self.db.remove(e);
         }
         self.trash.clear()
     }
@@ -168,7 +168,7 @@ impl std::fmt::Display for GC {
 
 pub struct MerkleStorage {
     current_stage_tree: Option<Tree>,
-    db: Arc<RwLock<MerkleStorageKV>>,
+    db: Arc<DashMap<EntryHash,Vec<u8>>>,
     // Track commits
     commits : LinkedHashSet<EntryHash>,
     staged: HashMap<EntryHash, Entry>,
@@ -229,7 +229,7 @@ pub struct MerklePerfStats {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct MerkleStorageStats {
-    pub db_stats: DBStats,
+    pub db_stats : DBStats,
     pub map_stats: MerkleMapStats,
     pub perf_stats: MerklePerfStats,
 }
@@ -247,7 +247,7 @@ impl KeyValueSchema for MerkleStorage {
 }
 
 impl MerkleStorage {
-    pub fn new(db: Arc<RwLock<DB>>) -> Self {
+    pub fn new(db: Arc<DashMap<EntryHash,Vec<u8>>>) -> Self {
         MerkleStorage {
             db: db.clone(),
             commits : LinkedHashSet::new(),
@@ -559,8 +559,7 @@ impl MerkleStorage {
         self.get_entries_recursively(entry, &mut batch)?;
 
         // atomically write all entries in one batch to DB
-        self.db.write().unwrap().write_batch(batch)?;
-
+        //self.db.write().unwrap().write_batch(batch)?;
 
         self.gc_entries_recursively(entry);
 
@@ -625,7 +624,8 @@ impl MerkleStorage {
 
         let k = &self.hash_entry(entry);
         let v = bincode::serialize(entry)?;
-        self.db.write().unwrap().put_batch(batch, k, &v);
+
+        self.db.insert(k.clone(),v);
         match entry {
             Entry::Blob(_) => {
                 //self.gc.update(k.clone(),None);
@@ -664,7 +664,7 @@ impl MerkleStorage {
         }
     }
 
-    fn clear_previous_commits(&mut self) -> Result<(), MerkleError> {
+    pub fn clear_previous_commits(&mut self) -> Result<(), MerkleError> {
         let mut commits = self.commits.clone();
 
         if let Some(last_commit) = &self.last_commit {
@@ -763,11 +763,11 @@ impl MerkleStorage {
     fn get_entry(&self, hash: &EntryHash) -> Result<Entry, MerkleError> {
         match self.staged.get(hash) {
             None => {
-                let entry_bytes = self.db.read().unwrap().get(hash)?;
+                let entry_bytes = self.db.get(hash);
                 match entry_bytes {
                     None => Err(MerkleError::EntryNotFound { hash: HashType::ContextHash.bytes_to_string(hash) }),
                     Some(entry_bytes) => {
-                        Ok(bincode::deserialize(entry_bytes.as_ref())?)
+                        Ok(bincode::deserialize(entry_bytes.value())?)
                     }
                 }
             }
@@ -800,8 +800,12 @@ impl MerkleStorage {
             avg_set_exec_time_ns = self.cumul_set_exec_time / ((self.set_exec_times - self.set_exec_times_to_discard) as f64);
         }
         let perf = MerklePerfStats { avg_set_exec_time_ns: avg_set_exec_time_ns };
-        let db_reader = self.db.read().unwrap();
-        let db_stats = db_reader.get_mem_use_stats().unwrap_or(DBStats { db_size: 0, keys: 0 });
+        let db_stats = DBStats {
+            db_size: 0,
+            keys: self.db.len()
+        };
+        //let db_reader = self.db.read().unwrap();
+        //let db_stats = db_reader.get_mem_use_stats().unwrap_or(DBStats { db_size: 0, keys: 0 });
         Ok(MerkleStorageStats { db_stats, map_stats: self.map_stats, perf_stats: perf })
     }
 }
@@ -816,7 +820,7 @@ mod tests {
     /*
     * Tests need to run sequentially, otherwise they will try to open RocksDB at the same time.
     */
-    fn get_storage() -> MerkleStorage { MerkleStorage::new(Arc::new(RwLock::new(DB::new()))) }
+    fn get_storage() -> MerkleStorage { MerkleStorage::new(Arc::new(DashMap::new())) }
     fn clean_db() {
 
     }
@@ -941,6 +945,7 @@ mod tests {
         }
         println!("Before GC: {:#?}", storage.get_merkle_stats());
         storage.clear_previous_commits();
+        println!("After GC: {:#?}", storage.get(key_abc));
         println!("After GC: {:#?}", storage.get_merkle_stats());
         /*
 

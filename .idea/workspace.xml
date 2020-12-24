@@ -13,8 +13,11 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="naive test">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="Bug fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -228,7 +231,7 @@
       <workItem from="1608293476581" duration="18539000" />
       <workItem from="1608366422522" duration="3116000" />
       <workItem from="1608538978725" duration="1889000" />
-      <workItem from="1608567834289" duration="31013000" />
+      <workItem from="1608567834289" duration="33542000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -468,7 +471,14 @@
       <option name="project" value="LOCAL" />
       <updated>1608675701300</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="Bug fix">
+      <created>1608746253771</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1608746253771</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -506,6 +516,7 @@
     <MESSAGE value="tests clean up" />
     <MESSAGE value="clean up" />
     <MESSAGE value="naive test" />
-    <option name="LAST_COMMIT_MESSAGE" value="naive test" />
+    <MESSAGE value="Bug fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="Bug fix" />
   </component>
 </project>
