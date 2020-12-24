@@ -601,7 +601,7 @@ impl MerkleStorage {
                 tree.iter().for_each(|(key, child_node)| {
                     match self.get_entry(&child_node.entry_hash) {
                         Err(_) => {}
-                        Ok(entry) => self.gc_entries_recursively(&entry),
+                        Ok(entry) => self.delete_entries_recursively(&entry),
                     };
                 });
             }
@@ -609,7 +609,7 @@ impl MerkleStorage {
                 match self.get_entry(&commit.root_hash) {
                     Err(_) => {}
                     Ok(entry) => {
-                        self.gc_entries_recursively(&entry)
+                        self.delete_entries_recursively(&entry)
                     }
                 }
             }
