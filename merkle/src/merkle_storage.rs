@@ -573,13 +573,12 @@ impl MerkleStorage {
     }
 
     fn delete_entries_recursively(&mut self, entry: &Entry) {
-
+        let k = &self.hash_entry(entry);
         match entry {
             Entry::Blob(_) => {}
             Entry::Tree(tree) => {
 
                 println!("Tree: {}", tree.len());
-
                 tree.iter().for_each(|(key, child_node)| {
                     self.gc.delete(&self.hash_entry(&entry));
                     match self.get_entry(&child_node.entry_hash) {
