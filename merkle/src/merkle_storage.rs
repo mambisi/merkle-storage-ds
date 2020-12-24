@@ -101,13 +101,13 @@ enum Entry {
 pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + Send;
 
 struct GC {
-    db: Arc<DashMap<EntryHash,Vec<u8>>>,
+    db: Arc<DashMap<EntryHash, Vec<u8>>>,
     blocks: HashMap<EntryHash, HashSet<EntryHash>>,
     trash: Vec<EntryHash>,
 }
 
 impl GC {
-    fn new(db: Arc<DashMap<EntryHash,Vec<u8>>>) -> GC {
+    fn new(db: Arc<DashMap<EntryHash, Vec<u8>>>) -> GC {
         GC {
             blocks: Default::default(),
             trash: Vec::new(),
@@ -168,9 +168,9 @@ impl std::fmt::Display for GC {
 
 pub struct MerkleStorage {
     current_stage_tree: Option<Tree>,
-    db: Arc<DashMap<EntryHash,Vec<u8>>>,
+    db: Arc<DashMap<EntryHash, Vec<u8>>>,
     // Track commits
-    commits : LinkedHashSet<EntryHash>,
+    commits: LinkedHashSet<EntryHash>,
     staged: HashMap<EntryHash, Entry>,
     last_commit: Option<Commit>,
     map_stats: MerkleMapStats,
@@ -229,7 +229,7 @@ pub struct MerklePerfStats {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct MerkleStorageStats {
-    pub db_stats : DBStats,
+    pub db_stats: DBStats,
     pub map_stats: MerkleMapStats,
     pub perf_stats: MerklePerfStats,
 }
@@ -247,10 +247,10 @@ impl KeyValueSchema for MerkleStorage {
 }
 
 impl MerkleStorage {
-    pub fn new(db: Arc<DashMap<EntryHash,Vec<u8>>>) -> Self {
+    pub fn new(db: Arc<DashMap<EntryHash, Vec<u8>>>) -> Self {
         MerkleStorage {
             db: db.clone(),
-            commits : LinkedHashSet::new(),
+            commits: LinkedHashSet::new(),
             gc: GC::new(db),
             staged: HashMap::new(),
             current_stage_tree: None,
@@ -363,7 +363,6 @@ impl MerkleStorage {
     }
 
 
-
     /// Flush the staging area and and move to work on a certain commit from history.
     pub fn checkout(&mut self, context_hash: &EntryHash) -> Result<(), MerkleError> {
         let commit = self.get_commit(&context_hash)?;
@@ -400,7 +399,6 @@ impl MerkleStorage {
         self.put_to_staging_area(&self.hash_commit(&new_commit), entry.clone());
         self.persist_staged_entry_to_db(&entry)?;
         self.gc_entries_recursively(&entry);
-
 
 
         self.staged = HashMap::new();
@@ -569,8 +567,7 @@ impl MerkleStorage {
     fn gc_entries_recursively(&mut self, entry: &Entry) {
         let k = &self.hash_entry(entry);
         match entry {
-            Entry::Blob(b) => {
-            }
+            Entry::Blob(b) => {}
             Entry::Tree(tree) => {
                 tree.iter().for_each(|(key, child_node)| {
                     self.gc.update(child_node.entry_hash, Some(k.clone()));
@@ -625,7 +622,7 @@ impl MerkleStorage {
         let k = &self.hash_entry(entry);
         let v = bincode::serialize(entry)?;
 
-        self.db.insert(k.clone(),v);
+        self.db.insert(k.clone(), v);
         match entry {
             Entry::Blob(_) => {
                 //self.gc.update(k.clone(),None);
@@ -671,10 +668,9 @@ impl MerkleStorage {
             commits.remove(&self.hash_commit(last_commit));
         }
 
-        for entry_hash in commits.iter() {
+        for entry_hash in commits.iter().rev() {
             let commit = self.get_commit(entry_hash)?;
-            let root_tree = self.get_tree(&commit.root_hash)?;
-            self.delete_entries_recursively(&Entry::Tree(root_tree))
+            self.delete_entries_recursively(&Entry::Commit(commit))
         }
         self.gc.clean();
         Ok(())
@@ -802,7 +798,7 @@ impl MerkleStorage {
         let perf = MerklePerfStats { avg_set_exec_time_ns: avg_set_exec_time_ns };
         let db_stats = DBStats {
             db_size: 0,
-            keys: self.db.len()
+            keys: self.db.len(),
         };
         //let db_reader = self.db.read().unwrap();
         //let db_stats = db_reader.get_mem_use_stats().unwrap_or(DBStats { db_size: 0, keys: 0 });
@@ -821,9 +817,8 @@ mod tests {
     * Tests need to run sequentially, otherwise they will try to open RocksDB at the same time.
     */
     fn get_storage() -> MerkleStorage { MerkleStorage::new(Arc::new(DashMap::new())) }
-    fn clean_db() {
 
-    }
+    fn clean_db() {}
 
     #[test]
     #[serial]
