@@ -162,7 +162,7 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             }
         }
 
-        if block_level != 0 && block_level % 5 == 0 {
+        if block_level != 0 && (block_level - 1) % 5 == 0 {
             storage.clear_previous_commits();
         }
     }
