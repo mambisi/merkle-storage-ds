@@ -101,56 +101,39 @@ enum Entry {
 pub type MerkleStorageKV = dyn KeyValueStoreWithSchema<MerkleStorage> + Sync + Send;
 
 struct GC {
-    db: Arc<DashMap<EntryHash,Vec<u8>>>,
-    blocks: HashMap<EntryHash, HashSet<EntryHash>>,
-    trash: Vec<EntryHash>,
+    db: Arc<DashMap<EntryHash, Vec<u8>>>,
+    blocks: HashMap<EntryHash, usize>
 }
 
 impl GC {
-    fn new(db: Arc<DashMap<EntryHash,Vec<u8>>>) -> GC {
+    fn new(db: Arc<DashMap<EntryHash, Vec<u8>>>) -> GC {
         GC {
             blocks: Default::default(),
-            trash: Vec::new(),
             db,
         }
     }
 
-    fn update(&mut self, e: EntryHash, r: Option<EntryHash>) {
-        match r {
-            None => {}
-            Some(r) => {
-                let refs = self.blocks.entry(e).or_insert(HashSet::new());
-                refs.insert(r);
-
-                let rev_refs = self.blocks.entry(r).or_insert(HashSet::new());
-                rev_refs.insert(e);
-            }
-        }
+    fn update(&mut self, e: EntryHash) {
+        let mut counter = self.blocks.entry(e).or_insert(0);
+        *counter += 1;
     }
 
     fn delete(&mut self, e: &EntryHash) {
-        self.trash.push(e.clone());
-        if let Some(d) = self.blocks.remove(e) {
-            for r in d.iter() {
-                match self.blocks.get_mut(r) {
-                    None => {}
-                    Some(refs) => {
-                        refs.remove(e);
-                        if refs.is_empty() {
-                            self.trash.push(r.clone());
-                        }
-                    }
-                }
-            }
+        let mut counter = self.blocks.entry(e.clone()).or_default();
+        if *counter <= 0 {
+            return;
         }
+        *counter -= 1;
     }
 
     fn clean(&mut self) {
-        for e in self.trash.iter() {
-            self.blocks.remove(e);
-            self.db.remove(e);
+        for (k,v) in &self.blocks {
+
+
+            if *v <= 0 {
+                self.db.remove(k);
+            }
         }
-        self.trash.clear()
     }
 }
 
@@ -158,7 +141,7 @@ impl std::fmt::Display for GC {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut display = String::new();
         self.blocks.iter().for_each(|(k, v)| {
-            display.push_str(&format!("{:?} : {} \n", k, v.len()));
+            display.push_str(&format!("{:?} : {} \n", k, v));
         }
         );
 
@@ -168,9 +151,9 @@ impl std::fmt::Display for GC {
 
 pub struct MerkleStorage {
     current_stage_tree: Option<Tree>,
-    db: Arc<DashMap<EntryHash,Vec<u8>>>,
+    db: Arc<DashMap<EntryHash, Vec<u8>>>,
     // Track commits
-    commits : LinkedHashSet<EntryHash>,
+    commits: LinkedHashSet<EntryHash>,
     staged: HashMap<EntryHash, Entry>,
     last_commit: Option<Commit>,
     map_stats: MerkleMapStats,
@@ -229,7 +212,7 @@ pub struct MerklePerfStats {
 
 #[derive(Serialize, Debug, Clone)]
 pub struct MerkleStorageStats {
-    pub db_stats : DBStats,
+    pub db_stats: DBStats,
     pub map_stats: MerkleMapStats,
     pub perf_stats: MerklePerfStats,
 }
@@ -247,10 +230,10 @@ impl KeyValueSchema for MerkleStorage {
 }
 
 impl MerkleStorage {
-    pub fn new(db: Arc<DashMap<EntryHash,Vec<u8>>>) -> Self {
+    pub fn new(db: Arc<DashMap<EntryHash, Vec<u8>>>) -> Self {
         MerkleStorage {
             db: db.clone(),
-            commits : LinkedHashSet::new(),
+            commits: LinkedHashSet::new(),
             gc: GC::new(db),
             staged: HashMap::new(),
             current_stage_tree: None,
@@ -363,7 +346,6 @@ impl MerkleStorage {
     }
 
 
-
     /// Flush the staging area and and move to work on a certain commit from history.
     pub fn checkout(&mut self, context_hash: &EntryHash) -> Result<(), MerkleError> {
         let commit = self.get_commit(&context_hash)?;
@@ -400,7 +382,6 @@ impl MerkleStorage {
         self.put_to_staging_area(&self.hash_commit(&new_commit), entry.clone());
         self.persist_staged_entry_to_db(&entry)?;
         self.gc_entries_recursively(&entry);
-
 
 
         self.staged = HashMap::new();
@@ -569,11 +550,10 @@ impl MerkleStorage {
     fn gc_entries_recursively(&mut self, entry: &Entry) {
         let k = &self.hash_entry(entry);
         match entry {
-            Entry::Blob(b) => {
-            }
+            Entry::Blob(b) => {}
             Entry::Tree(tree) => {
                 tree.iter().for_each(|(key, child_node)| {
-                    self.gc.update(child_node.entry_hash, Some(k.clone()));
+                    self.gc.update(child_node.entry_hash);
                     match self.get_entry(&child_node.entry_hash) {
                         Err(_) => {}
                         Ok(entry) => self.gc_entries_recursively(&entry),
@@ -581,7 +561,7 @@ impl MerkleStorage {
                 });
             }
             Entry::Commit(commit) => {
-                self.gc.update(commit.root_hash, Some(k.clone()));
+                self.gc.update(commit.root_hash);
                 match self.get_entry(&commit.root_hash) {
                     Err(_) => {}
                     Ok(entry) => {
@@ -593,15 +573,20 @@ impl MerkleStorage {
     }
 
     fn delete_entries_recursively(&mut self, entry: &Entry) {
-        let k = &self.hash_entry(entry);
+
         match entry {
             Entry::Blob(_) => {}
             Entry::Tree(tree) => {
-                self.gc.delete(k);
+
+                println!("Tree: {}", tree.len());
+
                 tree.iter().for_each(|(key, child_node)| {
+                    self.gc.delete(&self.hash_entry(&entry));
                     match self.get_entry(&child_node.entry_hash) {
                         Err(_) => {}
-                        Ok(entry) => self.gc_entries_recursively(&entry),
+                        Ok(entry) => {
+                            self.delete_entries_recursively(&entry)
+                        },
                     };
                 });
             }
@@ -609,7 +594,7 @@ impl MerkleStorage {
                 match self.get_entry(&commit.root_hash) {
                     Err(_) => {}
                     Ok(entry) => {
-                        self.gc_entries_recursively(&entry)
+                        self.delete_entries_recursively(&entry)
                     }
                 }
             }
@@ -625,7 +610,7 @@ impl MerkleStorage {
         let k = &self.hash_entry(entry);
         let v = bincode::serialize(entry)?;
 
-        self.db.insert(k.clone(),v);
+        self.db.insert(k.clone(), v);
         match entry {
             Entry::Blob(_) => {
                 //self.gc.update(k.clone(),None);
@@ -671,9 +656,10 @@ impl MerkleStorage {
             commits.remove(&self.hash_commit(last_commit));
         }
 
-        for entry_hash in commits.iter() {
+        for entry_hash in commits.iter().rev() {
             let commit = self.get_commit(entry_hash)?;
             let root_tree = self.get_tree(&commit.root_hash)?;
+            println!("Root Tree: {}",root_tree.len());
             self.delete_entries_recursively(&Entry::Tree(root_tree))
         }
         self.gc.clean();
@@ -802,7 +788,7 @@ impl MerkleStorage {
         let perf = MerklePerfStats { avg_set_exec_time_ns: avg_set_exec_time_ns };
         let db_stats = DBStats {
             db_size: 0,
-            keys: self.db.len()
+            keys: self.db.len(),
         };
         //let db_reader = self.db.read().unwrap();
         //let db_stats = db_reader.get_mem_use_stats().unwrap_or(DBStats { db_size: 0, keys: 0 });
@@ -821,9 +807,8 @@ mod tests {
     * Tests need to run sequentially, otherwise they will try to open RocksDB at the same time.
     */
     fn get_storage() -> MerkleStorage { MerkleStorage::new(Arc::new(DashMap::new())) }
-    fn clean_db() {
 
-    }
+    fn clean_db() {}
 
     #[test]
     #[serial]
@@ -927,10 +912,14 @@ mod tests {
         let key_eab: &ContextKey = &vec!["e".to_string(), "a".to_string(), "b".to_string()];
         let key_az: &ContextKey = &vec!["a".to_string(), "z".to_string()];
         let key_d: &ContextKey = &vec!["d".to_string()];
+        let key_h: &ContextKey = &vec!["h".to_string()];
+        let key_z: &ContextKey = &vec!["z".to_string()];
 
         let mut storage = get_storage();
 
         {
+            storage.set(key_h, &vec![1u8]);
+            storage.set(key_z, &vec![8u8]);
             storage.set(key_abc, &vec![1u8, 2u8]);
             storage.set(key_abx, &vec![3u8]);
             assert_eq!(storage.get(&key_abc).unwrap(), vec![1u8, 2u8]);
@@ -941,12 +930,14 @@ mod tests {
             storage.set(key_d, &vec![6u8]);
             storage.set(key_eab, &vec![7u8]);
             assert_eq!(storage.get(key_abx).unwrap(), vec![5u8]);
-            commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
+            commit2 = storage.commit(0, "".to_string(), "2".to_string()).unwrap();
         }
         println!("Before GC: {:#?}", storage.get_merkle_stats());
+        println!("Before GC: {}", storage.gc);
         storage.clear_previous_commits();
         println!("After GC: {:#?}", storage.get(key_abc));
         println!("After GC: {:#?}", storage.get_merkle_stats());
+        println!("After GC: {}", storage.gc);
         /*
 
         assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
