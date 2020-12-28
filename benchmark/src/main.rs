@@ -79,11 +79,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut ui = Arc::new(RwLock::new(BenchUI::default()));
     let ui2 = ui.clone();
-    tokio::spawn( async move {
+    /*
+    let background = tokio::spawn( async move {
         let node = node;
         run_benchmark(process_id, ui2, &node, blocks_limit, cycle).await;
     });
-    run(ui)?;
+
+    let ui = tokio::spawn( async move {
+        run(ui).await;
+    });
+
+     */
+
+    tokio::join!(run_benchmark(process_id, ui2, &node, blocks_limit, cycle),run(ui));
+
     Ok(())
 }
 
@@ -249,7 +258,7 @@ impl Default for BenchUI {
     }
 }
 
-fn run(app : Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
+async fn run(app : Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
     let app = app.read().unwrap();
     // Terminal initialization
     let stdout = io::stdout().into_raw_mode()?;
