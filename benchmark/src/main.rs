@@ -95,6 +95,8 @@ async fn run_benchmark(process_id: u32, ui: &mut BenchUI, node: &str, blocks_lim
 
     blocks.reverse();
 
+    ui.total_blocs = blocks.len() as f64;
+
     for block in blocks {
         let block = block.as_object().unwrap();
         let block_hash = block.get("hash").unwrap().as_str();
@@ -102,9 +104,7 @@ async fn run_benchmark(process_id: u32, ui: &mut BenchUI, node: &str, blocks_lim
         let block_level = block_header.get("level").unwrap().as_u64().unwrap();
         let block_hash = block_hash.unwrap();
         let actions_url = format!("{}/dev/chains/main/actions/blocks/{}", node, block_hash);
-
         drop(block);
-
 
         let mut messages = reqwest::get(&actions_url)
             .await?
@@ -151,6 +151,17 @@ async fn run_benchmark(process_id: u32, ui: &mut BenchUI, node: &str, blocks_lim
                 _ => (),
             };
         }
+
+        ui.synced_blocks = block_level as f64;
+
+        match storage.get_merkle_stats() {
+            Ok(stats) => {
+                ui.stats = Some(stats)
+            }
+            Err(_) => {}
+        };
+
+
         if block_level != 0 && block_level % cycle == 0 {
             current_cycle += 1;
 
@@ -165,10 +176,10 @@ async fn run_benchmark(process_id: u32, ui: &mut BenchUI, node: &str, blocks_lim
                     .output().await;
                 match output {
                     Ok(output) => {
-                        println!("{}", String::from_utf8_lossy(&output.stdout))
+                        ui.logs.push(format!("{}", String::from_utf8_lossy(&output.stdout)))
                     }
                     Err(_) => {
-                        println!("Error executing PS")
+                        ui.logs.push(String::from("Error executing PS"));
                     }
                 }
             }
@@ -177,7 +188,7 @@ async fn run_benchmark(process_id: u32, ui: &mut BenchUI, node: &str, blocks_lim
             println!("DB stats (Before GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
-                    println!("{:#?}", stats)
+                    ui.logs.push(format!("{:#?}", stats));
                 }
                 Err(_) => {}
             };
@@ -185,7 +196,7 @@ async fn run_benchmark(process_id: u32, ui: &mut BenchUI, node: &str, blocks_lim
             println!("DB stats (After GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
-                    println!("{:#?}", stats)
+                    ui.logs.push(format!("{:#?}", stats));
                 }
                 Err(_) => {}
             };
