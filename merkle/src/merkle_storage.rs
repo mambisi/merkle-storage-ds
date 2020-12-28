@@ -132,7 +132,7 @@ impl GC {
     }
 
     fn clean(&mut self) {
-        for (k,v) in &self.blocks {
+        for (k,v) in self.blocks.iter() {
             if *v <= 0 {
                 self.db.remove(k);
             }
@@ -555,7 +555,7 @@ impl MerkleStorage {
         match entry {
             Entry::Blob(b) => {}
             Entry::Tree(tree) => {
-                self.gc.update(k.clone());
+                //self.gc.update(k.clone());
                 tree.iter().for_each(|(key, child_node)| {
                     self.gc.update(child_node.entry_hash);
                     match self.get_entry(&child_node.entry_hash) {
@@ -580,21 +580,12 @@ impl MerkleStorage {
         match entry {
             Entry::Blob(_) => {}
             Entry::Tree(tree) => {
-
-
-                let sum_children_rc = tree.iter().fold(0,|root, (key, child_node)| {
-                    let entry_hash = &self.hash_entry(&entry);
-                    self.gc.delete(entry_hash);
-                    self.gc.get_ref_count(entry_hash)
-                });
-
                 println!("Tree {:?}: {}", k, tree.len());
                 println!("Tree RC: {}", self.gc.get_ref_count(k));
-                println!("Tree Children RC: {}", sum_children_rc);
-                if sum_children_rc == 0 {
-                    self.gc.delete(k);
-                }
+
                 tree.iter().for_each(|(key, child_node)| {
+                    self.gc.delete(&child_node.entry_hash);
+                    println!("Child RC: {}", self.gc.get_ref_count(&child_node.entry_hash));
                     match self.get_entry(&child_node.entry_hash) {
                         Err(_) => {}
                         Ok(entry) => {
@@ -667,13 +658,12 @@ impl MerkleStorage {
             return Ok(());
         }
 
-        let mut i  = (self.commits.len() - 1) as isize;
+        let mut i  = (self.commits.len() - 2) as isize;
         while i >= 0 {
             let entry_hash = &self.commits[i as usize];
             let commit = self.get_commit(entry_hash)?;
             let root_tree = self.get_tree(&commit.root_hash)?;
             self.delete_entries_recursively(&Entry::Tree(root_tree));
-            println!("      Commit Flushed: {:?}", commit.root_hash);
             i -= 1
         }
         self.gc.clean();
