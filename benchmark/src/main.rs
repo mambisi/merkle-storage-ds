@@ -1,6 +1,7 @@
 extern crate merkle;
 
 mod channel;
+mod util;
 
 use merkle::prelude::*;
 use std::sync::{Arc, RwLock};
@@ -21,6 +22,21 @@ use tokio::process::Command;
 use std::process::Output;
 use tokio::io::Error;
 use tokio::macros::support::Future;
+use std::io;
+use tui::backend::TermionBackend;
+use tui::Terminal;
+use tui::layout::*;
+use tui::widgets::*;
+use tui::style::*;
+use tui::backend::*;
+use termion::raw::IntoRawMode;
+use termion::screen::AlternateScreen;
+use termion::input::Events;
+use termion::input::MouseTerminal;
+use termion::event::{Key};
+use tui::text::Span;
+use util::Event;
+use tui::buffer::Cell;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -59,12 +75,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("node {}, limit {}, process id: {}", node, blocks_limit, process_id);
 
-
-    run_benchmark(process_id, node, blocks_limit, cycle).await
+    let mut ui = BenchUI::default();
+    run_benchmark(process_id, &mut ui, node, blocks_limit, cycle);
+    ui.run()?;
+    Ok(())
 }
 
 
-async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_benchmark(process_id: u32, ui : &mut BenchUI,  node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
     let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, blocks_limit + 10, blocks_limit);
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
@@ -174,5 +192,130 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
         }
     }
     Ok(())
+}
+
+struct BenchUI {
+    synced_blocks: f64,
+    total_blocs: f64,
+    stats: Option<MerkleStorageStats>,
+    logs: Vec<String>,
+}
+
+impl Default for BenchUI {
+    fn default() -> Self {
+        BenchUI {
+            synced_blocks: 0.0,
+            total_blocs: 0.0,
+            stats: None,
+            logs: vec![],
+        }
+    }
+}
+
+impl BenchUI {
+    fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        // Terminal initialization
+        let stdout = io::stdout().into_raw_mode()?;
+        let stdout = MouseTerminal::from(stdout);
+        let stdout = AlternateScreen::from(stdout);
+        let backend = TermionBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
+
+        let events = util::Events::new();
+        loop {
+            terminal.draw(|f| {
+                let text : String = String::from("Test Strings");
+                let chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .margin(1)
+                    .constraints(
+                        [
+                            Constraint::Percentage(70),
+                            Constraint::Percentage(30),
+                        ]
+                            .as_ref(),
+                    )
+                    .split(f.size());
+
+                let left_chunck = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(2)
+                    .constraints(
+                        [
+                            Constraint::Length(3),
+                            Constraint::Max(100),
+                        ]
+                            .as_ref(),
+                    )
+                    .split(chunks[0]);
+                let right_chunck = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(2)
+                    .constraints(
+                        [
+                            Constraint::Length(3),
+                            Constraint::Length(10),
+                        ]
+                            .as_ref(),
+                    )
+                    .split(chunks[1]);
+
+
+
+
+                let gauge = Gauge::default()
+                    .block(Block::default().title("Sync Progress").borders(Borders::ALL))
+                    .gauge_style(Style::default().fg(Color::Yellow)).ratio( self.synced_blocks / self.total_blocs);
+                f.render_widget(gauge, left_chunck[0]);
+
+                let logs : String = self.logs.join("\n");
+
+                let paragraph = Paragraph::new(logs)
+                    .style(Style::default().bg(Color::Black).fg(Color::White))
+                    .block(Block::default().title("Logs").borders(Borders::ALL))
+                    .alignment(Alignment::Left)
+                    .wrap(Wrap { trim: true });
+                f.render_widget(paragraph, left_chunck[1]);
+
+                let sync_process = if self.total_blocs + self.synced_blocks > 0.0 {
+                    format!("{}/{}", self.synced_blocks, self.total_blocs)
+                } else {
+                    String::from("--/--")
+                };
+
+                let paragraph = Paragraph::new(sync_process)
+                    .style(Style::default().bg(Color::Black).fg(Color::White))
+                    .block(Block::default().title("Sync Progress").borders(Borders::ALL))
+                    .alignment(Alignment::Left)
+                    .wrap(Wrap { trim: true });
+                f.render_widget(paragraph, right_chunck[0]);
+
+                let db_stats = if let Some(stats) = &self.stats {
+                    format!("{:#?}", stats)
+                } else {
+                    String::from("...")
+                };
+
+                let paragraph = Paragraph::new(db_stats)
+                    .style(Style::default().bg(Color::Black).fg(Color::White))
+                    .block(Block::default().title("Database Stats").borders(Borders::ALL))
+                    .alignment(Alignment::Left)
+                    .wrap(Wrap { trim: true });
+                f.render_widget(paragraph, right_chunck[1]);
+
+
+            });
+            match events.next()? {
+                Event::Input(input) => {
+                    if input == Key::Ctrl('c') {
+                        break;
+                    }
+                }
+                Event::Tick => {}
+            }
+        }
+
+        Ok(())
+    }
 }
 
