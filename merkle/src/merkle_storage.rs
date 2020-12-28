@@ -170,7 +170,7 @@ pub struct MerkleStorage {
     current_stage_tree: Option<Tree>,
     db: Arc<DashMap<EntryHash, Vec<u8>>>,
     // Track commits
-    commits: LinkedHashSet<EntryHash>,
+    commits: Vec<EntryHash>,
     staged: HashMap<EntryHash, Entry>,
     last_commit: Option<Commit>,
     map_stats: MerkleMapStats,
@@ -250,7 +250,7 @@ impl MerkleStorage {
     pub fn new(db: Arc<DashMap<EntryHash, Vec<u8>>>) -> Self {
         MerkleStorage {
             db: db.clone(),
-            commits: LinkedHashSet::new(),
+            commits: Vec::new(),
             gc: GC::new(db),
             staged: HashMap::new(),
             current_stage_tree: None,
@@ -404,7 +404,7 @@ impl MerkleStorage {
         self.staged = HashMap::new();
         self.map_stats.staged_area_elems = 0;
         self.last_commit = Some(new_commit.clone());
-        self.commits.insert(self.hash_commit(&new_commit));
+        self.commits.push(self.hash_commit(&new_commit));
         Ok(self.hash_commit(&new_commit))
     }
 
@@ -662,15 +662,32 @@ impl MerkleStorage {
     }
 
     pub fn clear_previous_commits(&mut self) -> Result<(), MerkleError> {
-        let mut commits = self.commits.clone();
-
-        if let Some(last_commit) = &self.last_commit {
-            commits.remove(&self.hash_commit(last_commit));
+        if self.commits.len() <= 0 {
+            return Ok(());
         }
 
-        for entry_hash in commits.iter().rev() {
+        let mut i  = (self.commits.len() - 2) as isize;
+        while i >= 0 {
+            let entry_hash = &self.commits[i as usize];
             let commit = self.get_commit(entry_hash)?;
-            self.delete_entries_recursively(&Entry::Commit(commit))
+            self.delete_entries_recursively(&Entry::Commit(commit));
+            i -= 1;
+        }
+        self.gc.clean();
+        Ok(())
+    }
+
+    pub fn clear_all_commits(&mut self) -> Result<(), MerkleError> {
+        if self.commits.len() <= 0 {
+            return Ok(());
+        }
+
+        let mut i  = (self.commits.len() - 1) as isize;
+        while i >= 0 {
+            let entry_hash = &self.commits[i as usize];
+            let commit = self.get_commit(entry_hash)?;
+            self.delete_entries_recursively(&Entry::Commit(commit));
+            i -= 1;
         }
         self.gc.clean();
         Ok(())
@@ -912,7 +929,7 @@ mod tests {
 
     #[test]
     #[serial]
-    fn garbage_test() {
+    fn garbage_collection_test_preserving_latest_commit() {
         clean_db();
 
         let commit1;
@@ -942,16 +959,41 @@ mod tests {
         storage.clear_previous_commits();
         println!("After GC: {:#?}", storage.get(key_abc));
         println!("After GC: {:#?}", storage.get_merkle_stats());
-        /*
+    }
 
-        assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
-        assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
-        assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![5u8]);
-        assert_eq!(storage.get_history(&commit2, key_az).unwrap(), vec![4u8]);
-        assert_eq!(storage.get_history(&commit2, key_d).unwrap(), vec![6u8]);
-        assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![7u8]);
+    #[test]
+    #[serial]
+    fn garbage_collection_test_removing_all_commits() {
+        clean_db();
 
-         */
+        let commit1;
+        let commit2;
+        let key_abc: &ContextKey = &vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let key_abx: &ContextKey = &vec!["a".to_string(), "b".to_string(), "x".to_string()];
+        let key_eab: &ContextKey = &vec!["e".to_string(), "a".to_string(), "b".to_string()];
+        let key_az: &ContextKey = &vec!["a".to_string(), "z".to_string()];
+        let key_d: &ContextKey = &vec!["d".to_string()];
+
+        let mut storage = get_storage();
+
+        {
+            storage.set(key_abc, &vec![1u8, 2u8]);
+            storage.set(key_abx, &vec![3u8]);
+            assert_eq!(storage.get(&key_abc).unwrap(), vec![1u8, 2u8]);
+            assert_eq!(storage.get(&key_abx).unwrap(), vec![3u8]);
+            commit1 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
+            storage.set(key_az, &vec![4u8]);
+            storage.set(key_abx, &vec![5u8]);
+            storage.set(key_d, &vec![6u8]);
+            storage.set(key_eab, &vec![7u8]);
+            assert_eq!(storage.get(key_abx).unwrap(), vec![5u8]);
+            commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
+        }
+        println!("Before GC: {:#?}", storage.get_merkle_stats());
+        storage.clear_all_commits();
+        println!("After GC: {:#?}", storage.get_merkle_stats());
+        assert_eq!(storage.get_merkle_stats().unwrap().db_stats.keys, 0)
+
     }
 
     #[test]
