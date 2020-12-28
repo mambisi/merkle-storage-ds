@@ -94,6 +94,11 @@ async fn run_benchmark(process_id: u32, ui: Arc<RwLock<BenchUI>>, node: &str, bl
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0;
 
+    {
+        let mut ui = ui.write().unwrap();
+        ui.logs.push(String::from("Requesting Blocks..."));
+    }
+
     let mut blocks = reqwest::get(&blocks_url)
         .await?
         .json::<Vec<Value>>()
