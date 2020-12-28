@@ -82,7 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 
-async fn run_benchmark(process_id: u32, ui : &mut BenchUI,  node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_benchmark(process_id: u32, ui: &mut BenchUI, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
     let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, blocks_limit + 10, blocks_limit);
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
@@ -224,7 +224,7 @@ impl BenchUI {
         let events = util::Events::new();
         loop {
             terminal.draw(|f| {
-                let text : String = String::from("Test Strings");
+                let text: String = String::from("Test Strings");
                 let chunks = Layout::default()
                     .direction(Direction::Horizontal)
                     .margin(1)
@@ -261,14 +261,12 @@ impl BenchUI {
                     .split(chunks[1]);
 
 
-
-
                 let gauge = Gauge::default()
                     .block(Block::default().title("Sync Progress").borders(Borders::ALL))
-                    .gauge_style(Style::default().fg(Color::Yellow)).ratio( self.synced_blocks / self.total_blocs);
+                    .gauge_style(Style::default().fg(Color::Yellow)).ratio(self.synced_blocks / if self.total_blocs == 0.0 { 1_f64 } else { self.total_blocs });
                 f.render_widget(gauge, left_chunck[0]);
 
-                let logs : String = self.logs.join("\n");
+                let logs: String = self.logs.join("\n");
 
                 let paragraph = Paragraph::new(logs)
                     .style(Style::default().bg(Color::Black).fg(Color::White))
@@ -302,8 +300,6 @@ impl BenchUI {
                     .alignment(Alignment::Left)
                     .wrap(Wrap { trim: true });
                 f.render_widget(paragraph, right_chunck[1]);
-
-
             });
             match events.next()? {
                 Event::Input(input) => {
