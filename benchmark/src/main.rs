@@ -350,7 +350,7 @@ async fn run(app : Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error
         match events.next()? {
             Event::Input(input) => {
                 if input == Key::Ctrl('c') {
-                    break;
+                    std::process::exit(0);
                 }
             }
             Event::Tick => {}
