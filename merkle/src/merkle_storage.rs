@@ -211,28 +211,28 @@ impl MerkleStorage {
     }
 
     pub fn gc(&mut self) -> Result<(),MerkleError>{
+        // Lock write to database
+        let mut db_writer  =  self.db.write().unwrap();
         let mut todo = LinkedHashSet::new();
-        self.mark_entries(&mut todo);
-        println!("SEEN : {}", todo.len());
-        self.sweep_entries(todo);
+        self.mark_entries(&mut todo, &mut db_writer);
+        self.sweep_entries(&mut db_writer,todo);
         Ok(())
     }
 
-    fn mark_entries(&mut self, todo : &mut LinkedHashSet<IVec>) {
+    fn mark_entries(&self, todo : &mut LinkedHashSet<IVec>, db: &mut RwLockWriteGuard<MerkleStorageKV>) {
         if let Some(commit) = &self.last_commit {
             let entry = Entry::Commit(commit.clone());
-            self.mark_entries_recursively(&entry,todo);
+            self.mark_entries_recursively(&entry,todo, db);
         }
     }
 
-    fn sweep_entries(&mut self, todo : LinkedHashSet<IVec>)  -> Result<(),MerkleError> {
+    fn sweep_entries(&self, db: &mut RwLockWriteGuard<MerkleStorageKV>, todo : LinkedHashSet<IVec>)  -> Result<(),MerkleError> {
         let p = todo.into_iter().collect::<Vec<_>>();
-        let mut db_writer  =  self.db.write().unwrap();
-        db_writer.retain(&p);
+        db.retain(&p);
         Ok(())
     }
 
-    fn mark_entries_recursively(&mut self,  entry: &Entry, todo : &mut LinkedHashSet<IVec>) {
+    fn mark_entries_recursively(&self,  entry: &Entry, todo : &mut LinkedHashSet<IVec>,db: &mut RwLockWriteGuard<MerkleStorageKV>) {
         let k = &self.hash_entry(entry);
         match entry {
             Entry::Blob(_) => {
@@ -241,18 +241,18 @@ impl MerkleStorage {
             Entry::Tree(tree) => {
                 todo.insert_if_absent(IVec::from(k));
                 tree.iter().for_each(|(key, child_node)| {
-                    match self.get_entry(&child_node.entry_hash) {
+                    match self.get_entry_from_db_with_write_lock(&child_node.entry_hash, db) {
                         Err(_) => {}
-                        Ok(entry) => self.mark_entries_recursively(&entry, todo),
+                        Ok(entry) => self.mark_entries_recursively(&entry, todo, db),
                     };
                 });
             }
             Entry::Commit(commit) => {
                 todo.insert_if_absent(IVec::from(k));
-                match self.get_entry(&commit.root_hash) {
+                match self.get_entry_from_db_with_write_lock(&commit.root_hash, db) {
                     Err(_) => {}
                     Ok(entry) => {
-                        self.mark_entries_recursively(&entry, todo)
+                        self.mark_entries_recursively(&entry, todo,db)
                     }
                 }
             }
@@ -672,6 +672,17 @@ impl MerkleStorage {
         }
     }
 
+
+    fn get_entry_from_db_with_write_lock(&self, hash: &EntryHash, db : &mut RwLockWriteGuard<MerkleStorageKV>) -> Result<Entry, MerkleError> {
+        let entry_bytes = db.get(hash)?;
+        match entry_bytes {
+            None => Err(MerkleError::EntryNotFound { hash: HashType::ContextHash.bytes_to_string(hash) }),
+            Some(entry_bytes) => {
+                Ok(bincode::deserialize(entry_bytes.as_ref())?)
+            }
+        }
+    }
+
     fn get_non_leaf(&self, hash: EntryHash) -> Node {
         Node { node_kind: NodeKind::NonLeaf, entry_hash: hash }
     }
@@ -836,7 +847,8 @@ mod tests {
             commit2 = storage.commit(0, "".to_string(), "".to_string()).unwrap();
         }
 
-        println!("{:#?}", storage.get_merkle_stats());
+        let keys_before_gc = storage.get_merkle_stats().unwrap().db_stats.keys;
+        println!("Merkle Stat Before GC: {:#?}", storage.get_merkle_stats());
         assert_eq!(storage.get_history(&commit1, key_abc).unwrap(), vec![1u8, 2u8]);
         assert_eq!(storage.get_history(&commit1, key_abx).unwrap(), vec![3u8]);
         assert_eq!(storage.get_history(&commit2, key_abx).unwrap(), vec![5u8]);
@@ -845,7 +857,10 @@ mod tests {
         assert_eq!(storage.get_history(&commit2, key_eab).unwrap(), vec![7u8]);
 
         storage.gc();
-        println!("{:#?}", storage.get(key_abc));
+        println!("Merkle Stat After GC: {:#?}", storage.get_merkle_stats());
+        let keys_after_gc = storage.get_merkle_stats().unwrap().db_stats.keys;
+        assert!(keys_after_gc <= keys_before_gc)
+
 
     }
 
