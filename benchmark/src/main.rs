@@ -79,19 +79,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut ui = Arc::new(RwLock::new(BenchUI::default()));
     let ui2 = ui.clone();
-    /*
-    let background = tokio::spawn( async move {
+    tokio::spawn(async move {
         let node = node;
         run_benchmark(process_id, ui2, &node, blocks_limit, cycle).await;
     });
 
-    let ui = tokio::spawn( async move {
-        run(ui).await;
-    });
-
-     */
-
-    tokio::join!(run_benchmark(process_id, ui2, &node, blocks_limit, cycle),run(ui));
+    run(ui);
 
     Ok(())
 }
@@ -103,11 +96,12 @@ async fn run_benchmark(process_id: u32, ui: Arc<RwLock<BenchUI>>, node: &str, bl
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0;
 
+    /*
     {
         let mut ui = ui.write().unwrap();
         ui.logs.push(String::from("Requesting Blocks..."));
     }
-
+*/
     let mut blocks = reqwest::get(&blocks_url)
         .await?
         .json::<Vec<Value>>()
@@ -175,8 +169,6 @@ async fn run_benchmark(process_id: u32, ui: Arc<RwLock<BenchUI>>, node: &str, bl
                 _ => (),
             };
         }
-
-
 
 
         match storage.get_merkle_stats() {
@@ -258,8 +250,8 @@ impl Default for BenchUI {
     }
 }
 
-async fn run(app : Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
-    let app = app.read().unwrap();
+fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
+
     // Terminal initialization
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = MouseTerminal::from(stdout);
@@ -269,7 +261,13 @@ async fn run(app : Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error
 
     let events = util::Events::new();
     loop {
+
+
         terminal.draw(|f| {
+
+
+            let app = app.read().unwrap();
+
             let text: String = String::from("Test Strings");
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
