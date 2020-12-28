@@ -1,4 +1,5 @@
 #![feature(const_fn)]
+#![feature(btree_drain_filter)]
 
 mod hash;
 mod blake2b;

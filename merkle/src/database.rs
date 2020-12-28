@@ -6,7 +6,7 @@ use crate::db_iterator;
 use std::collections::{HashMap, BTreeMap};
 use crate::db_iterator::{DBIterator, DBIterationHandler};
 use crate::ivec::IVec;
-use serde::{Serialize,Deserialize};
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Default, Clone)]
 pub struct Batch {
@@ -58,7 +58,7 @@ impl slog::Value for DBError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DBStats {
     pub db_size: usize,
-    pub keys : usize
+    pub keys: usize,
 }
 
 
@@ -122,6 +122,11 @@ pub trait KeyValueStoreWithSchema<S: KeyValueSchema> {
     /// * `batch` - WriteBatch containing all batched writes to be written to DB
     fn write_batch(&mut self, batch: Batch) -> Result<(), DBError>;
 
+    /// Remove items from DB if not present in pred
+    /// # Retain
+    /// * `pred` - items to retain
+    fn retain(&mut self, pred: &Vec<IVec>) -> Result<(), DBError>;
+
     /// Get memory usage statistics from DB
     fn get_mem_use_stats(&self) -> Result<DBStats, DBError>;
 }
@@ -152,7 +157,7 @@ impl DB {
     pub fn db_size(&self) -> usize {
         let mut byte_count = 0;
 
-        for (k,v) in &self.inner {
+        for (k, v) in &self.inner {
             byte_count += k.len();
             byte_count += v.len();
         }
@@ -275,11 +280,32 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
         Ok(())
     }
 
+    fn retain(&mut self, pred: &Vec<IVec>) -> Result<(), DBError> {
+        self.inner.drain_filter(|k,v| {
+            !pred.contains(k)
+        });
+        Ok(())
+    }
+
+
     fn get_mem_use_stats(&self) -> Result<DBStats, DBError> {
         Ok(DBStats {
             db_size: self.db_size(),
-            keys : self.inner.len()
+            keys: self.inner.len(),
         })
     }
 }
 
+impl DB {
+    pub fn pretty_print_db(&self) {
+        println!("{:?}", self.inner)
+    }
+
+    pub fn get_inner(&mut self) -> &mut BTreeMap<IVec,IVec> {
+        &mut self.inner
+    }
+
+    pub fn len(&self) -> usize {
+       self.inner.len()
+    }
+}
