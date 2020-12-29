@@ -48,16 +48,17 @@ use serde::Serialize;
 use std::collections::HashMap;
 use im::{OrdMap, HashSet};
 use failure::Fail;
-use std::sync::{Arc, RwLock, RwLockWriteGuard};
+use std::sync::{Arc, RwLock, RwLockWriteGuard, PoisonError};
 use std::time::Instant;
 use crate::hash::HashType;
 use std::convert::TryInto;
 use sodiumoxide::crypto::generichash::State;
-use crate::codec::BincodeEncoded;
+use crate::codec::{BincodeEncoded, SchemaError};
 use crate::schema::KeyValueSchema;
 use crate::database::{KeyValueStoreWithSchema, Batch, DB, DBStats, IteratorMode};
 use crate::database::DBError;
 use linked_hash_set::LinkedHashSet;
+use rayon::prelude::*;
 use crate::ivec::IVec;
 
 const HASH_LEN: usize = 32;
@@ -212,10 +213,11 @@ impl MerkleStorage {
 
     pub fn gc(&mut self) -> Result<(),MerkleError>{
         // Lock write to database
-        let mut db_writer  =  self.db.write().unwrap();
+        let db = self.db.clone();
+        let mut db_writer  =  db.write().unwrap();
         let mut todo = LinkedHashSet::new();
         self.mark_entries(&mut todo, &mut db_writer);
-        self.sweep_entries(&mut db_writer,todo);
+        self.sweep_entries( todo);
         Ok(())
     }
 
@@ -226,9 +228,24 @@ impl MerkleStorage {
         }
     }
 
-    fn sweep_entries(&self, db: &mut RwLockWriteGuard<MerkleStorageKV>, todo : LinkedHashSet<IVec>)  -> Result<(),MerkleError> {
+    fn sweep_entries(&mut self, todo : LinkedHashSet<IVec>)  -> Result<(),MerkleError> {
+        let db = self.db.clone();
+        let db_writer = db.write().unwrap();
         let p = todo.into_iter().collect::<Vec<_>>();
-        db.retain(&p);
+        let iterator = db_writer.iterator(IteratorMode::Start)?;
+        iterator.par_bridge().for_each(|(k,v)| {
+            if let Ok(k) = k {
+                if !p.contains(&IVec::from(k.to_vec())){
+                    match self.db.write() {
+                        Ok(mut db) => {
+                            db.delete(&k);
+                        }
+                        Err(_) => {}
+                    };
+
+                }
+            }
+        });
         Ok(())
     }
 
