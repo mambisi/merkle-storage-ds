@@ -19,7 +19,7 @@ impl Batch {
     /// Set a key to a new value
     pub fn insert(&mut self, key: Vec<u8>, value: Vec<u8>)
     {
-        self.writes.insert(key,value);
+        self.writes.insert(key, value);
     }
 
     /// Remove a key
@@ -123,6 +123,7 @@ pub trait KeyValueStoreWithSchema<S: KeyValueSchema> {
     /// # Retain
     /// * `pred` - items to retain
     fn retain(&mut self, pred: Vec<Vec<u8>>) -> Result<(), DBError>;
+
 
     /// Get memory usage statistics from DB
     fn get_mem_use_stats(&self) -> Result<DBStats, DBError>;
@@ -267,11 +268,10 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
     }
 
     fn retain(&mut self, pred: Vec<Vec<u8>>) -> Result<(), DBError> {
-
-        let garbage_keys : Vec<_> = self.inner.iter().par_bridge().filter_map(|(k,v)|{
+        let garbage_keys: Vec<_> = self.inner.iter().par_bridge().filter_map(|(k, v)| {
             if !pred.contains(&k) {
                 Some(k)
-            }else {
+            } else {
                 None
             }
         }).collect();
@@ -279,9 +279,11 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
         for k in garbage_keys {
             self.inner.remove(k);
         }
-
+        self.shrink();
         Ok(())
     }
+
+
 
 
     fn get_mem_use_stats(&self) -> Result<DBStats, DBError> {
@@ -297,7 +299,13 @@ impl DB {
         println!("{:?}", self.inner)
     }
 
+    fn shrink(&mut self) {
+        self.inner.iter_mut().par_bridge().for_each(|(k,v)| {
+            v.shrink_to_fit()
+        });
+    }
+
     pub fn len(&self) -> usize {
-       self.inner.len()
+        self.inner.len()
     }
 }
