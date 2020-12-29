@@ -13,8 +13,7 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="bug fix">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="revert">
       <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -73,7 +72,7 @@
       <recent name="$PROJECT_DIR$/merkle/src" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Run benchmark">
+  <component name="RunManager" selected="Cargo.Test merkle_storage::tests">
     <configuration name="Run benchmark" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package benchmark --bin benchmark -- --cycle 100 -l 2 -n &quot;http://46.101.190.161:18732&quot; " />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -474,7 +473,21 @@
       <option name="project" value="LOCAL" />
       <updated>1609192137453</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="bug fix">
+      <created>1609258094436</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1609258094436</updated>
+    </task>
+    <task id="LOCAL-00040" summary="revert">
+      <created>1609258201995</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1609258201995</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -483,6 +496,11 @@
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
+        <entry key="1">
+          <value>
+            <State />
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -510,7 +528,8 @@
     <MESSAGE value="added ui for debugging" />
     <MESSAGE value="graceful exit" />
     <MESSAGE value="bug fix" />
-    <option name="LAST_COMMIT_MESSAGE" value="bug fix" />
+    <MESSAGE value="revert" />
+    <option name="LAST_COMMIT_MESSAGE" value="revert" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/merkle_storage_ds$Test_merkle_storage__tests__garbage_test.info" NAME="Test merkle_storage::tests::garbage_test Coverage Results" MODIFIED="1608795966917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="RsCoverageRunner" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" CONTEXT_FILE_PATH="$PROJECT_DIR$/merkle" />
