@@ -307,7 +307,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
             let gauge = Gauge::default()
                 .block(Block::default().title("Sync Progress").borders(Borders::ALL))
                 .gauge_style(Style::default().fg(Color::Yellow)).ratio(app.synced_blocks / if app.total_blocs == 0.0 { 1_f64 } else { app.total_blocs });
-            f.render_widget(gauge, left_chunck[0]);
+            f.render_widget(gauge, left_chunk[0]);
 
             let logs: String = app.logs.join("\n\n");
 
@@ -316,7 +316,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .block(Block::default().title("Logs").borders(Borders::ALL))
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: false });
-            f.render_widget(paragraph, left_chunck[1]);
+            f.render_widget(paragraph, left_chunk[1]);
 
             let sync_process = if app.total_blocs + app.synced_blocks > 0.0 {
                 format!("{}/{}", app.synced_blocks, app.total_blocs)
