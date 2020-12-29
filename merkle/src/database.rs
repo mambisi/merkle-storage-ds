@@ -155,8 +155,8 @@ impl DB {
         let mut byte_count = 0;
 
         for (k, v) in self.inner.iter() {
-            byte_count += k.len();
-            byte_count += v.len();
+            byte_count += std::mem::size_of_val(&k);
+            byte_count += std::mem::size_of_val(v);
         }
 
         byte_count

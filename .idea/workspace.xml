@@ -13,9 +13,7 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="bug fix">
-      <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
-    </list>
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="bug fix" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -206,6 +204,7 @@
       <workItem from="1608293476581" duration="18539000" />
       <workItem from="1608366422522" duration="3116000" />
       <workItem from="1608538978725" duration="1522000" />
+      <workItem from="1609264872604" duration="2000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
