@@ -342,7 +342,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .block(Block::default().title("Database Stats").borders(Borders::ALL))
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: false });
-            f.render_widget(paragraph, right_chunk[2]);
+            f.render_widget(paragraph, right_chunk[1]);
         });
         match events.next()? {
             Event::Input(input) => {
