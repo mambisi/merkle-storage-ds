@@ -219,27 +219,27 @@ impl MerkleStorage {
         Ok(())
     }
 
-    fn mark_entries(&self, todo : &mut LinkedHashSet<IVec>, db: &mut RwLockWriteGuard<MerkleStorageKV>) {
+    fn mark_entries(&self, todo : &mut LinkedHashSet<Vec<u8>>, db: &mut RwLockWriteGuard<MerkleStorageKV>) {
         if let Some(commit) = &self.last_commit {
             let entry = Entry::Commit(commit.clone());
             self.mark_entries_recursively(&entry,todo, db);
         }
     }
 
-    fn sweep_entries(&self, db: &mut RwLockWriteGuard<MerkleStorageKV>, todo : LinkedHashSet<IVec>)  -> Result<(),MerkleError> {
+    fn sweep_entries(&self, db: &mut RwLockWriteGuard<MerkleStorageKV>, todo : LinkedHashSet<Vec<u8>>)  -> Result<(),MerkleError> {
         let p = todo.into_iter().collect::<Vec<_>>();
-        db.retain(&p);
+        db.retain(p);
         Ok(())
     }
 
-    fn mark_entries_recursively(&self,  entry: &Entry, todo : &mut LinkedHashSet<IVec>,db: &mut RwLockWriteGuard<MerkleStorageKV>) {
+    fn mark_entries_recursively(&self,  entry: &Entry, todo : &mut LinkedHashSet<Vec<u8>>,db: &mut RwLockWriteGuard<MerkleStorageKV>) {
         let k = &self.hash_entry(entry);
         match entry {
             Entry::Blob(_) => {
-                todo.insert_if_absent(IVec::from(k));
+                todo.insert_if_absent(k.to_vec());
             }
             Entry::Tree(tree) => {
-                todo.insert_if_absent(IVec::from(k));
+                todo.insert_if_absent(k.to_vec());
                 tree.iter().for_each(|(key, child_node)| {
                     match self.get_entry_from_db_with_write_lock(&child_node.entry_hash, db) {
                         Err(_) => {}
@@ -248,7 +248,7 @@ impl MerkleStorage {
                 });
             }
             Entry::Commit(commit) => {
-                todo.insert_if_absent(IVec::from(k));
+                todo.insert_if_absent(k.to_vec());
                 match self.get_entry_from_db_with_write_lock(&commit.root_hash, db) {
                     Err(_) => {}
                     Ok(entry) => {

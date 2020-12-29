@@ -8,7 +8,7 @@ use crate::database::DB;
 #[derive(Clone)]
 pub enum Direction {
     Forward,
-    Reverse,
+    //Reverse,
 }
 
 #[derive(Clone)]
@@ -34,24 +34,21 @@ impl<'a> DBIterator<'a> {
 
 
 impl<'a> Iterator for DBIterator<'a> {
-    type Item = (IVec, IVec);
+    type Item = (Vec<u8>, Vec<u8>);
 
     fn next(&mut self) -> Option<Self::Item> {
         match &self.mode {
             IteratorMode::Start => {
-                self.raw.inner.iter().next().map(|(k, v)| { (k.clone(), v.clone()) })
+                self.raw.inner.iter().next().map(|(k, v)| { (k, v.clone()) })
             }
             IteratorMode::End => {
-                self.raw.inner.iter().last().map(|(k, v)| { (k.clone(), v.clone()) })
+                self.raw.inner.iter().last().map(|(k, v)| { (k, v.clone()) })
             }
             IteratorMode::From(k, direction) => {
                 let key = k.to_vec();
                 match direction {
                     Direction::Forward => {
-                        self.raw.inner.range(IVec::from(key)..).next().map(|(k, v)| { (k.clone(), v.clone()) })
-                    }
-                    Direction::Reverse => {
-                        self.raw.inner.range(IVec::from(key)..).last().map(|(k, v)| { (k.clone(), v.clone()) })
+                        self.raw.inner.iter_prefix(&key).next().map(|(k, v)| { (k, v.clone()) })
                     }
                 }
             }
