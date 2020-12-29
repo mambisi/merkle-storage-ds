@@ -273,8 +273,8 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Percentage(70),
-                        Constraint::Percentage(30),
+                        Constraint::Percentage(60),
+                        Constraint::Percentage(40),
                     ]
                         .as_ref(),
                 )
@@ -297,7 +297,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .constraints(
                     [
                         Constraint::Length(3),
-                        Constraint::Length(10),
+                        Constraint::Length(3),
                     ]
                         .as_ref(),
                 )
@@ -341,8 +341,8 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .style(Style::default().bg(Color::Black).fg(Color::White))
                 .block(Block::default().title("Database Stats").borders(Borders::ALL))
                 .alignment(Alignment::Left)
-                .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, right_chunk[1]);
+                .wrap(Wrap { trim: false });
+            f.render_widget(paragraph, right_chunk[2]);
         });
         match events.next()? {
             Event::Input(input) => {
