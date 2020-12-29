@@ -96,12 +96,11 @@ async fn run_benchmark(process_id: u32, ui: Arc<RwLock<BenchUI>>, node: &str, bl
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0;
 
-    /*
+
     {
         let mut ui = ui.write().unwrap();
         ui.logs.push(String::from("Requesting Blocks..."));
     }
-*/
     let mut blocks = reqwest::get(&blocks_url)
         .await?
         .json::<Vec<Value>>()
@@ -281,7 +280,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 )
                 .split(f.size());
 
-            let left_chunck = Layout::default()
+            let left_chunk = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(2)
                 .constraints(
@@ -292,7 +291,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                         .as_ref(),
                 )
                 .split(chunks[0]);
-            let right_chunck = Layout::default()
+            let right_chunk = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(2)
                 .constraints(
@@ -310,13 +309,13 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .gauge_style(Style::default().fg(Color::Yellow)).ratio(app.synced_blocks / if app.total_blocs == 0.0 { 1_f64 } else { app.total_blocs });
             f.render_widget(gauge, left_chunck[0]);
 
-            let logs: String = app.logs.join("\n");
+            let logs: String = app.logs.join("\n\n");
 
             let paragraph = Paragraph::new(logs)
                 .style(Style::default().bg(Color::Black).fg(Color::White))
                 .block(Block::default().title("Logs").borders(Borders::ALL))
                 .alignment(Alignment::Left)
-                .wrap(Wrap { trim: true });
+                .wrap(Wrap { trim: false });
             f.render_widget(paragraph, left_chunck[1]);
 
             let sync_process = if app.total_blocs + app.synced_blocks > 0.0 {
@@ -330,7 +329,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .block(Block::default().title("Sync Progress").borders(Borders::ALL))
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, right_chunck[0]);
+            f.render_widget(paragraph, right_chunk[0]);
 
             let db_stats = if let Some(stats) = &app.stats {
                 format!("{:#?}", stats)
@@ -343,7 +342,7 @@ fn run(app: Arc<RwLock<BenchUI>>) -> Result<(), Box<dyn std::error::Error>> {
                 .block(Block::default().title("Database Stats").borders(Borders::ALL))
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, right_chunck[1]);
+            f.render_widget(paragraph, right_chunk[1]);
         });
         match events.next()? {
             Event::Input(input) => {
