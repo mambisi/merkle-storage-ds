@@ -205,15 +205,15 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
 
 fn print_stats(stats: MerkleStorageStats, mem_allocated: usize, mem_resident: usize) {
     // Read statistics using MIB key:
-    println!("{:<35}{}", "RESIDENT MEM:", mem_resident);
-    println!("{:<35}{}", "ALLOCATED MEM:", mem_allocated);
-    println!("{:<35}{}", "DB SIZE:", stats.db_stats.db_size);
-    println!("{:<35}{}", "KEYS:", stats.db_stats.keys);
+    println!("      {:<35}{}", "RESIDENT MEM:", mem_resident);
+    println!("      {:<35}{}", "ALLOCATED MEM:", mem_allocated);
+    println!("      {:<35}{}", "DB SIZE:", stats.db_stats.db_size);
+    println!("      {:<35}{}", "KEYS:", stats.db_stats.keys);
 
     for (k, v) in stats.perf_stats.global.iter() {
-        println!("{:<35}{}", format!("{} AVG EXEC TIME:", k.to_uppercase()), v.avg_exec_time);
-        println!("{:<35}{}", format!("{} OP EXEC TIME MAX:", k.to_uppercase()), v.op_exec_time_max);
-        println!("{:<35}{}", format!("{} OP EXEC TIME MIN:", k.to_uppercase()), v.op_exec_time_min);
-        println!("{:<35}{}", format!("{} OP EXEC TIMES:", k.to_uppercase()), v.op_exec_times);
+        println!("      {:<35}{}", format!("{} AVG EXEC TIME:", k.to_uppercase()), v.avg_exec_time);
+        println!("      {:<35}{}", format!("{} OP EXEC TIME MAX:", k.to_uppercase()), v.op_exec_time_max);
+        println!("      {:<35}{}", format!("{} OP EXEC TIME MIN:", k.to_uppercase()), v.op_exec_time_min);
+        println!("      {:<35}{}", format!("{} OP EXEC TIMES:", k.to_uppercase()), v.op_exec_times);
     }
 }
