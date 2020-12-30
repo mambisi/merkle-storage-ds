@@ -158,26 +158,6 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             // when the epoch is advanced:
             e.advance().unwrap();
 
-
-            let pid = process_id.to_string();
-            if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
-                let output = Command::new("ps")
-                    .arg("-p")
-                    .arg(&pid)
-                    .arg("-o")
-                    .arg("pid,%mem,rss,vsize")
-                    .output().await;
-                match output {
-                    Ok(output) => {
-                        println!("{}", String::from_utf8_lossy(&output.stdout))
-                    }
-                    Err(_) => {
-                        println!("Error executing PS")
-                    }
-                }
-            }
-
-
             println!("DB stats (Before GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
@@ -205,9 +185,9 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
 
 fn print_stats(stats: MerkleStorageStats, mem_allocated: usize, mem_resident: usize) {
     // Read statistics using MIB key:
-    println!("      {:<35}{}", "RESIDENT MEM:", mem_resident);
-    println!("      {:<35}{}", "ALLOCATED MEM:", mem_allocated);
-    println!("      {:<35}{}", "DB SIZE:", stats.db_stats.db_size);
+    println!("      {:<35}{:.2} MiB", "RESIDENT MEM:", mem_resident as f64 / 1024.0 / 1024.0);
+    println!("      {:<35}{:.2} MiB", "ALLOCATED MEM:", mem_allocated as f64 / 1024.0 / 1024.0);
+    println!("      {:<35}{:.2} MiB", "DB SIZE:", stats.db_stats.db_size as f64 / 1024.0 / 1024.0);
     println!("      {:<35}{}", "KEYS:", stats.db_stats.keys);
 
     for (k, v) in stats.perf_stats.global.iter() {
