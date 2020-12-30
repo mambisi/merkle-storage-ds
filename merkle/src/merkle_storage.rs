@@ -238,6 +238,7 @@ impl MerkleStorage {
 
     /// Get value from current staged root
     pub fn get(&mut self, key: &ContextKey) -> Result<ContextValue, MerkleError> {
+        let instant = Instant::now();
         let root = &self.get_staged_root()?;
         let root_hash = self.hash_tree(&root)?;
 
