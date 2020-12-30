@@ -211,13 +211,9 @@ fn print_stats(stats: MerkleStorageStats, mem_allocated: usize, mem_resident: us
     println!("{:<28}{}", "KEYS:", stats.db_stats.keys);
 
     for (k, v) in stats.perf_stats.global.iter() {
-        let k = format!("{} AVG EXEC TIME:", k.to_uppercase());
-        println!("{:<28}{}", k, v.avg_exec_time);
-        let k = format!("{} OP EXEC TIME MAX:", k.to_uppercase());
-        println!("{:<28}{}", k, v.op_exec_time_max);
-        let k = format!("{} OP EXEC TIME MIN:", k.to_uppercase());
-        println!("{:<28}{}", k, v.op_exec_time_min);
-        let k = format!("{} OP EXEC TIMES:", k.to_uppercase());
-        println!("{:<28}{}", k, v.op_exec_times);
+        println!("{:<28}{}", format!("{} AVG EXEC TIME:", k.to_uppercase()), v.avg_exec_time);
+        println!("{:<28}{}", format!("{} OP EXEC TIME MAX:", k.to_uppercase()), v.op_exec_time_max);
+        println!("{:<28}{}", format!("{} OP EXEC TIME MIN:", k.to_uppercase()), v.op_exec_time_min);
+        println!("{:<28}{}", format!("{} OP EXEC TIMES:", k.to_uppercase()), v.op_exec_times);
     }
 }
