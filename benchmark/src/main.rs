@@ -182,11 +182,11 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                     // Read statistics using MIB key:
                     let mem_allocated = allocated.read().unwrap();
                     let mem_resident = resident.read().unwrap();
-                    println!("RESIDENT MEM:             {}", mem_resident);
-                    println!("ALLOCATED MEM:            {}", mem_allocated);
-                    println!("DB SIZE:                  {}", stats.db_stats.db_size);
-                    println!("KEYS:                     {}", stats.db_stats.keys);
-                    println!("SET AVG EXEC TIME:        {}", stats.perf_stats.avg_set_exec_time_ns)
+                    println!("      RESIDENT MEM:             {}", mem_resident);
+                    println!("      ALLOCATED MEM:            {}", mem_allocated);
+                    println!("      DB SIZE:                  {}", stats.db_stats.db_size);
+                    println!("      KEYS:                     {}", stats.db_stats.keys);
+                    println!("      SET AVG EXEC TIME:        {}", stats.perf_stats.avg_set_exec_time_ns)
                 }
                 Err(_) => {}
             };
@@ -198,11 +198,11 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                     // Read statistics using MIB key:
                     let mem_allocated = allocated.read().unwrap();
                     let mem_resident = resident.read().unwrap();
-                    println!("RESIDENT MEM:             {}", mem_resident);
-                    println!("ALLOCATED MEM:            {}", mem_allocated);
-                    println!("DB SIZE:                  {}", stats.db_stats.db_size);
-                    println!("KEYS:                     {}", stats.db_stats.keys);
-                    println!("SET AVG EXEC TIME:        {}", stats.perf_stats.avg_set_exec_time_ns)
+                    println!("      RESIDENT MEM:             {}", mem_resident);
+                    println!("      ALLOCATED MEM:            {}", mem_allocated);
+                    println!("      DB SIZE:                  {}", stats.db_stats.db_size);
+                    println!("      KEYS:                     {}", stats.db_stats.keys);
+                    println!("      SET AVG EXEC TIME:        {}", stats.perf_stats.avg_set_exec_time_ns)
                 }
                 Err(_) => {}
             };
