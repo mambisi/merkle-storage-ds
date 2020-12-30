@@ -16,6 +16,7 @@
     <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="nice printout">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -214,14 +215,7 @@
       <workItem from="1608538978725" duration="1522000" />
       <workItem from="1609264872604" duration="2000" />
       <workItem from="1609265279506" duration="1837000" />
-      <workItem from="1609296353802" duration="17514000" />
-    </task>
-    <task id="LOCAL-00006" summary="testing">
-      <created>1608212836438</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1608212836438</updated>
+      <workItem from="1609296353802" duration="18552000" />
     </task>
     <task id="LOCAL-00007" summary="testing">
       <created>1608293888083</created>
@@ -559,7 +553,14 @@
       <option name="project" value="LOCAL" />
       <updated>1609365099243</updated>
     </task>
-    <option name="localTasksCounter" value="55" />
+    <task id="LOCAL-00055" summary="nice printout">
+      <created>1609367827769</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1609367827770</updated>
+    </task>
+    <option name="localTasksCounter" value="56" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

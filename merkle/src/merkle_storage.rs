@@ -241,7 +241,9 @@ impl MerkleStorage {
         let root = &self.get_staged_root()?;
         let root_hash = self.hash_tree(&root)?;
 
-        self.get_from_tree(&root_hash, key)
+        let rv = self.get_from_tree(&root_hash, key);
+        self.update_execution_stats("Get".to_string(), Some(&key), &instant);
+        rv
     }
 
     /// Get value. Staging area is checked first, then last (checked out) commit.

@@ -158,7 +158,7 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             // when the epoch is advanced:
             e.advance().unwrap();
 
-            println!("DB stats (Before GC)  at cycle: {}", current_cycle);
+            println!("DB(Patricia Tree) stats (Before GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
                     let mem_allocated = allocated.read().unwrap();
@@ -169,7 +169,7 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             };
             storage.gc();
             println!();
-            println!("DB stats (After GC)  at cycle: {}", current_cycle);
+            println!("DB(Patricia Tree) stats (After GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
                     let mem_allocated = allocated.read().unwrap();
