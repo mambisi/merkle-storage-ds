@@ -22,3 +22,7 @@ clap = "2.33.3"
 tracing = "0.1"
 tracing-subscriber = "0.2"
 sysinfo = "0.15.3"
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = "0.3.2"
+jemalloc-ctl = "0.3.3"

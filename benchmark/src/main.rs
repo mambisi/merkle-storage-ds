@@ -23,6 +23,14 @@ use std::process::Output;
 use tokio::io::Error;
 use tokio::macros::support::Future;
 use std::io;
+use jemalloc_ctl::{stats, epoch};
+
+#[cfg(not(target_env = "msvc"))]
+use jemallocator::Jemalloc;
+
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -71,6 +79,11 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0;
+
+    let e = epoch::mib().unwrap();
+    let allocated = stats::allocated::mib().unwrap();
+    let resident = stats::resident::mib().unwrap();
+
 
     let mut blocks = reqwest::get(&blocks_url)
         .await?
@@ -139,6 +152,14 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             current_cycle += 1;
 
 
+            // Many statistics are cached and only updated
+            // when the epoch is advanced:
+            e.advance().unwrap();
+
+            // Read statistics using MIB key:
+            let mem_allocated = allocated.read().unwrap();
+            let mem_resident = resident.read().unwrap();
+            println!("Memory Stats (Before GC) : {} bytes allocated/{} bytes resident", mem_allocated, mem_resident);
             let pid = process_id.to_string();
             if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
                 let output = Command::new("ps")
@@ -166,6 +187,11 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                 Err(_) => {}
             };
             storage.gc();
+
+            // Read statistics using MIB key:
+            let mem_allocated = allocated.read().unwrap();
+            let mem_resident = resident.read().unwrap();
+            println!("Memory Stats (Before GC) : {} bytes allocated/{} bytes resident", mem_allocated, mem_resident);
             println!("DB stats (After GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
