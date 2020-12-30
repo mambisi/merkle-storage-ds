@@ -181,21 +181,9 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             println!("DB stats (Before GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
-                    // Read statistics using MIB key:
                     let mem_allocated = allocated.read().unwrap();
                     let mem_resident = resident.read().unwrap();
-                    println!("      RESIDENT MEM:             {}", mem_resident);
-                    println!("      ALLOCATED MEM:            {}", mem_allocated);
-                    println!("      DB SIZE:                  {}", stats.db_stats.db_size);
-                    println!("      KEYS:                     {}", stats.db_stats.keys);
-
-                    for (k,v) in stats.perf_stats.global.iter() {
-                        println!("      {} AVG EXEC TIME:        {}",k.to_uppercase(),v.avg_exec_time );
-                        println!("      {} OP EXEC TIME MAX:        {}",k.to_uppercase(),v.op_exec_time_max );
-                        println!("      {} OP EXEC TIME MIN:        {}",k.to_uppercase(),v.op_exec_time_min );
-                        println!("      {} OP EXEC TIMES:        {}",k.to_uppercase(),v.op_exec_times );
-                    }
-
+                    print_stats(stats, mem_allocated, mem_resident)
                 }
                 Err(_) => {}
             };
@@ -204,23 +192,32 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
             println!("DB stats (After GC)  at cycle: {}", current_cycle);
             match storage.get_merkle_stats() {
                 Ok(stats) => {
-                    // Read statistics using MIB key:
                     let mem_allocated = allocated.read().unwrap();
                     let mem_resident = resident.read().unwrap();
-                    println!("      RESIDENT MEM:             {}", mem_resident);
-                    println!("      ALLOCATED MEM:            {}", mem_allocated);
-                    println!("      DB SIZE:                  {}", stats.db_stats.db_size);
-                    println!("      KEYS:                     {}", stats.db_stats.keys);
-                    for (k,v) in stats.perf_stats.global.iter() {
-                        println!("      {} AVG EXEC TIME:        {}",k.to_uppercase(),v.avg_exec_time );
-                        println!("      {} OP EXEC TIME MAX:        {}",k.to_uppercase(),v.op_exec_time_max );
-                        println!("      {} OP EXEC TIME MIN:        {}",k.to_uppercase(),v.op_exec_time_min );
-                        println!("      {} OP EXEC TIMES:        {}",k.to_uppercase(),v.op_exec_times );
-                    }
+                    print_stats(stats, mem_allocated, mem_resident)
                 }
                 Err(_) => {}
             };
         }
     }
     Ok(())
+}
+
+fn print_stats(stats: MerkleStorageStats, mem_allocated: usize, mem_resident: usize) {
+    // Read statistics using MIB key:
+    println!("{:<28}{}", "RESIDENT MEM:", mem_resident);
+    println!("{:<28}{}", "ALLOCATED MEM:", mem_allocated);
+    println!("{:<28}{}", "DB SIZE:", stats.db_stats.db_size);
+    println!("{:<28}{}", "KEYS:", stats.db_stats.keys);
+
+    for (k, v) in stats.perf_stats.global.iter() {
+        let k = format!("{} AVG EXEC TIME:", k.to_uppercase());
+        println!("{:<28}{}", k, v.avg_exec_time);
+        let k = format!("{} OP EXEC TIME MAX:", k.to_uppercase());
+        println!("{:<28}{}", k, v.op_exec_time_max);
+        let k = format!("{} OP EXEC TIME MIN:", k.to_uppercase());
+        println!("{:<28}{}", k, v.op_exec_time_min);
+        let k = format!("{} OP EXEC TIMES:", k.to_uppercase());
+        println!("{:<28}{}", k, v.op_exec_times);
+    }
 }
