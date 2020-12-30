@@ -14,8 +14,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="nice logs">
+      <change afterPath="$PROJECT_DIR$/merkle/src/crypto_box.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/merkle/src/nonce.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/src/hash.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/hash.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/src/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,7 +79,7 @@
       <recent name="$PROJECT_DIR$/merkle/src" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Test merkle_storage::tests">
+  <component name="RunManager" selected="Cargo.Run benchmark">
     <configuration name="Run benchmark" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
       <option name="command" value="run --package benchmark --bin benchmark -- --cycle 100 -l 2 -n &quot;http://46.101.190.161:18732&quot; " />
       <option name="workingDirectory" value="file://$PROJECT_DIR$" />
@@ -174,9 +180,9 @@
     <recent_temporary>
       <list>
         <item itemvalue="Cargo.Test merkle_storage::tests::gc_test" />
+        <item itemvalue="Cargo.Test merkle_storage::tests" />
         <item itemvalue="Cargo.Test merkle_storage::tests::get_test" />
         <item itemvalue="Cargo.Test merkle_storage::tests::test_get_context_tree_by_prefix" />
-        <item itemvalue="Cargo.Test merkle_storage::tests" />
       </list>
     </recent_temporary>
   </component>
@@ -214,7 +220,7 @@
       <workItem from="1608538978725" duration="1522000" />
       <workItem from="1609264872604" duration="2000" />
       <workItem from="1609265279506" duration="1837000" />
-      <workItem from="1609296353802" duration="9384000" />
+      <workItem from="1609296353802" duration="14205000" />
     </task>
     <task id="LOCAL-00001" summary="project structure change&#10;test data added">
       <created>1608032022010</created>
@@ -552,7 +558,14 @@
       <option name="project" value="LOCAL" />
       <updated>1609351637272</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="nice logs">
+      <created>1609354540040</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1609354540040</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -603,5 +616,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/merkle_storage_ds$Test_merkle_storage__tests__garbage_test.info" NAME="Test merkle_storage::tests::garbage_test Coverage Results" MODIFIED="1608795966917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="RsCoverageRunner" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" CONTEXT_FILE_PATH="$PROJECT_DIR$/merkle" />
+    <SUITE FILE_PATH="coverage/merkle_storage_ds$Test_merkle_storage__tests.info" NAME="Test merkle_storage::tests Coverage Results" MODIFIED="1609358640620" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="RsCoverageRunner" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" CONTEXT_FILE_PATH="$PROJECT_DIR$/merkle" />
   </component>
 </project>

@@ -133,11 +133,13 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                     let date = *date as u64;
                     let hash = storage.commit(date, author.to_owned(), message.to_owned()).unwrap();
                     let commit_hash = hash[..].to_vec();
-                    assert_eq!(&commit_hash, new_context_hash,
-                               "Invalid context_hash for block: {}, expected: {}, but was: {}",
-                               HashType::BlockHash.bytes_to_string(block_hash),
-                               HashType::ContextHash.bytes_to_string(new_context_hash),
-                               HashType::ContextHash.bytes_to_string(&commit_hash),
+                    assert_eq!(
+                        &commit_hash,
+                        new_context_hash,
+                        "Invalid context_hash for block: {}, expected: {}, but was: {}",
+                        HashType::BlockHash.hash_to_b58check(block_hash),
+                        HashType::ContextHash.hash_to_b58check(new_context_hash),
+                        HashType::ContextHash.hash_to_b58check(&hash),
                     );
                 }
 
@@ -186,7 +188,14 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                     println!("      ALLOCATED MEM:            {}", mem_allocated);
                     println!("      DB SIZE:                  {}", stats.db_stats.db_size);
                     println!("      KEYS:                     {}", stats.db_stats.keys);
-                    println!("      SET AVG EXEC TIME:        {}", stats.perf_stats.avg_set_exec_time_ns)
+
+                    for (k,v) in stats.perf_stats.global.iter() {
+                        println!("      {} AVG EXEC TIME:        {}",k.to_uppercase(),v.avg_exec_time );
+                        println!("      {} OP EXEC TIME MAX:        {}",k.to_uppercase(),v.op_exec_time_max );
+                        println!("      {} OP EXEC TIME MIN:        {}",k.to_uppercase(),v.op_exec_time_min );
+                        println!("      {} OP EXEC TIMES:        {}",k.to_uppercase(),v.op_exec_times );
+                    }
+
                 }
                 Err(_) => {}
             };
@@ -202,7 +211,12 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
                     println!("      ALLOCATED MEM:            {}", mem_allocated);
                     println!("      DB SIZE:                  {}", stats.db_stats.db_size);
                     println!("      KEYS:                     {}", stats.db_stats.keys);
-                    println!("      SET AVG EXEC TIME:        {}", stats.perf_stats.avg_set_exec_time_ns)
+                    for (k,v) in stats.perf_stats.global.iter() {
+                        println!("      {} AVG EXEC TIME:        {}",k.to_uppercase(),v.avg_exec_time );
+                        println!("      {} OP EXEC TIME MAX:        {}",k.to_uppercase(),v.op_exec_time_max );
+                        println!("      {} OP EXEC TIME MIN:        {}",k.to_uppercase(),v.op_exec_time_min );
+                        println!("      {} OP EXEC TIMES:        {}",k.to_uppercase(),v.op_exec_times );
+                    }
                 }
                 Err(_) => {}
             };
