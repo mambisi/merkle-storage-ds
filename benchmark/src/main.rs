@@ -75,25 +75,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
 async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
-    let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, blocks_limit + 10, blocks_limit);
+
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0;
-
     let e = epoch::mib().unwrap();
     let allocated = stats::allocated::mib().unwrap();
     let resident = stats::resident::mib().unwrap();
 
+    for i in 0..blocks_limit {
 
-    let mut blocks = reqwest::get(&blocks_url)
-        .await?
-        .json::<Vec<Value>>()
-        .await?;
+        let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, 1 , i);
+        let mut blocks = reqwest::get(&blocks_url)
+            .await?
+            .json::<Vec<Value>>()
+            .await?;
 
-    blocks.reverse();
-
-    for block in blocks {
-        let block = block.as_object().unwrap();
+        let block = blocks.first().unwrap().as_object().unwrap();
         let block_hash = block.get("hash").unwrap().as_str();
         let block_header = block.get("header").unwrap().as_object().unwrap();
         let block_level = block_header.get("level").unwrap().as_u64().unwrap();
