@@ -48,7 +48,7 @@ use serde::Serialize;
 use std::collections::{HashMap, BTreeMap};
 use im::{OrdMap, HashSet};
 use failure::Fail;
-use std::sync::{Arc, RwLock, RwLockWriteGuard};
+use std::sync::{Arc, RwLock, RwLockWriteGuard, Mutex};
 use std::time::Instant;
 use crate::hash::HashType;
 use std::convert::TryInto;
@@ -317,11 +317,14 @@ impl MerkleStorage {
     }
 
     pub fn gc(&mut self) -> Result<(),MerkleError>{
+        let instant = Instant::now();
+        let db = self.db.clone();
         // Lock write to database
-        let mut db_writer  =  self.db.write().unwrap();
+        let mut db_writer  = db.write().unwrap();
         let mut todo = LinkedHashSet::new();
         self.mark_entries(&mut todo, &mut db_writer);
         self.sweep_entries(&mut db_writer,todo);
+        self.update_execution_stats("GC".to_string(), None, &instant);
         Ok(())
     }
 

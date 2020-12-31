@@ -60,22 +60,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .default_value("4096")
             .help("Cycle length, logs the memory usage at every cycle")
         )
+        .arg(Arg::with_name("gc")
+            .short("gc")
+            .long("gc")
+            .help("Garbage Collection")
+        )
         .get_matches();
 
     let node = matches.value_of("node").unwrap();
     let blocks_limit = matches.value_of("limit").unwrap().parse::<u64>().unwrap_or(25000);
     let cycle = matches.value_of("cycle").unwrap().parse::<u64>().unwrap_or(4096);
+    let gc_enabled = matches.is_present("gc");
     let process_id = std::process::id();
 
-    println!("node {}, limit {}, process id: {}", node, blocks_limit, process_id);
-
-
-    run_benchmark(process_id, node, blocks_limit, cycle).await
+    println!("node {}, limit {}, process id: {}, gc : {}", node, blocks_limit, process_id, if gc_enabled {"enabled"} else {"disabled"} );
+    run_benchmark(gc_enabled, node, blocks_limit, cycle).await
 }
 
 
-async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
-
+async fn run_benchmark(gc_enabled: bool, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0;
@@ -84,8 +87,7 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
     let resident = stats::resident::mib().unwrap();
 
     for i in 0..blocks_limit {
-
-        let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, 1 , i);
+        let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, 1, i);
         let mut blocks = reqwest::get(&blocks_url)
             .await?
             .json::<Vec<Value>>()
@@ -150,24 +152,13 @@ async fn run_benchmark(process_id: u32, node: &str, blocks_limit: u64, cycle: u6
         }
         if block_level != 0 && block_level % cycle == 0 {
             current_cycle += 1;
-
-
-            // Many statistics are cached and only updated
-            // when the epoch is advanced:
             e.advance().unwrap();
-
-            println!("DB(Patricia Tree) stats (Before GC)  at cycle: {}", current_cycle);
-            match storage.get_merkle_stats() {
-                Ok(stats) => {
-                    let mem_allocated = allocated.read().unwrap();
-                    let mem_resident = resident.read().unwrap();
-                    print_stats(stats, mem_allocated, mem_resident)
-                }
-                Err(_) => {}
-            };
-            storage.gc();
-            println!();
-            println!("DB(Patricia Tree) stats (After GC)  at cycle: {}", current_cycle);
+            if gc_enabled {
+                storage.gc();
+                println!("DB(Patricia Tree) stats (GC)  at cycle: {}", current_cycle);
+            }else {
+                println!("DB(Patricia Tree) stats No GC  at cycle: {}", current_cycle);
+            }
             match storage.get_merkle_stats() {
                 Ok(stats) => {
                     let mem_allocated = allocated.read().unwrap();
@@ -194,4 +185,5 @@ fn print_stats(stats: MerkleStorageStats, mem_allocated: usize, mem_resident: us
         println!("      {:<35}{}", format!("{} OP EXEC TIME MIN:", k.to_uppercase()), v.op_exec_time_min);
         println!("      {:<35}{}", format!("{} OP EXEC TIMES:", k.to_uppercase()), v.op_exec_times);
     }
+
 }
