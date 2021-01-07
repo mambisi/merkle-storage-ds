@@ -23,6 +23,8 @@ use std::process::Output;
 use tokio::io::Error;
 use tokio::macros::support::Future;
 use std::io;
+
+/*
 use jemalloc_ctl::{stats, epoch};
 
 #[cfg(not(target_env = "msvc"))]
@@ -31,7 +33,7 @@ use jemallocator::Jemalloc;
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
-
+*/
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = clap::App::new("Merkle Storage Benchmark")
@@ -161,9 +163,9 @@ async fn run_benchmark(gc_enabled: bool, node: &str, blocks_limit: u64, cycle: u
             }
             match storage.get_merkle_stats() {
                 Ok(stats) => {
-                    let mem_allocated = allocated.read().unwrap();
-                    let mem_resident = resident.read().unwrap();
-                    print_stats(stats, mem_allocated, mem_resident)
+                    //let mem_allocated = allocated.read().unwrap();
+                    //let mem_resident = resident.read().unwrap();
+                    print_stats(stats, 0, 0)
                 }
                 Err(_) => {}
             };
@@ -174,9 +176,9 @@ async fn run_benchmark(gc_enabled: bool, node: &str, blocks_limit: u64, cycle: u
 
 fn print_stats(stats: MerkleStorageStats, mem_allocated: usize, mem_resident: usize) {
     // Read statistics using MIB key:
-    println!("      {:<35}{:.2} MiB", "RESIDENT MEM:", mem_resident as f64 / 1024.0 / 1024.0);
-    println!("      {:<35}{:.2} MiB", "ALLOCATED MEM:", mem_allocated as f64 / 1024.0 / 1024.0);
-    println!("      {:<35}{:.2} MiB", "DB SIZE:", stats.db_stats.db_size as f64 / 1024.0 / 1024.0);
+    //println!("      {:<35}{:.2} MiB", "RESIDENT MEM:", mem_resident as f64 / 1024.0 / 1024.0);
+    //println!("      {:<35}{:.2} MiB", "ALLOCATED MEM:", mem_allocated as f64 / 1024.0 / 1024.0);
+    //println!("      {:<35}{:.2} MiB", "DB SIZE:", stats.db_stats.db_size as f64 / 1024.0 / 1024.0);
     println!("      {:<35}{}", "KEYS:", stats.db_stats.keys);
 
     for (k, v) in stats.perf_stats.global.iter() {

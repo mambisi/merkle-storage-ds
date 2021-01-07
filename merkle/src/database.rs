@@ -279,7 +279,6 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
         for k in garbage_keys {
             self.inner.remove(k);
         }
-        self.shrink();
         Ok(())
     }
 
@@ -297,12 +296,6 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
 impl DB {
     pub fn pretty_print_db(&self) {
         println!("{:?}", self.inner)
-    }
-
-    fn shrink(&mut self) {
-        self.inner.iter_mut().par_bridge().for_each(|(k,v)| {
-            v.shrink_to_fit()
-        });
     }
 
     pub fn len(&self) -> usize {
