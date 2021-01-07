@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn run_benchmark(gc_enabled: bool, node: &str, blocks_limit: u64, cycle: u64) -> Result<(), Box<dyn std::error::Error>> {
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
-    let mut current_cycle = 0;
+    let mut current_cycle = 0_usize;
     let e = epoch::mib().unwrap();
     let allocated = stats::allocated::mib().unwrap();
     let resident = stats::resident::mib().unwrap();

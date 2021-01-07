@@ -13,9 +13,8 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="added stats to gc">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="remove jemalloc">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/merkle/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/database.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -213,14 +212,7 @@
       <workItem from="1609415706408" duration="7969000" />
       <workItem from="1609850175833" duration="1598000" />
       <workItem from="1609944956363" duration="367000" />
-      <workItem from="1610008774605" duration="907000" />
-    </task>
-    <task id="LOCAL-00011" summary="set limit on block actions to 100_000">
-      <created>1608294456236</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1608294456236</updated>
+      <workItem from="1610008774605" duration="1706000" />
     </task>
     <task id="LOCAL-00012" summary="node test">
       <created>1608305763188</created>
@@ -558,7 +550,14 @@
       <option name="project" value="LOCAL" />
       <updated>1609451209346</updated>
     </task>
-    <option name="localTasksCounter" value="60" />
+    <task id="LOCAL-00060" summary="remove jemalloc">
+      <created>1610032866520</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1610032866521</updated>
+    </task>
+    <option name="localTasksCounter" value="61" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -583,7 +582,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
-    <MESSAGE value="fetch with reqwest" />
     <MESSAGE value="update" />
     <MESSAGE value="testing" />
     <MESSAGE value="set limit on block actions" />
@@ -608,7 +606,8 @@
     <MESSAGE value="nice printout" />
     <MESSAGE value="Bug fix" />
     <MESSAGE value="added stats to gc" />
-    <option name="LAST_COMMIT_MESSAGE" value="added stats to gc" />
+    <MESSAGE value="remove jemalloc" />
+    <option name="LAST_COMMIT_MESSAGE" value="remove jemalloc" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/merkle_storage_ds$Test_merkle_storage__tests__garbage_test.info" NAME="Test merkle_storage::tests::garbage_test Coverage Results" MODIFIED="1608795966917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="RsCoverageRunner" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" CONTEXT_FILE_PATH="$PROJECT_DIR$/merkle" />
