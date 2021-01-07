@@ -154,7 +154,7 @@ async fn run_benchmark(gc_enabled: bool, node: &str, blocks_limit: u64, cycle: u
         }
         if block_level != 0 && block_level % cycle == 0 {
             current_cycle += 1;
-            e.advance().unwrap();
+            //e.advance().unwrap();
             if gc_enabled {
                 storage.gc();
                 println!("DB(Patricia Tree) stats (GC)  at cycle: {}", current_cycle);
