@@ -84,9 +84,9 @@ async fn run_benchmark(gc_enabled: bool, node: &str, blocks_limit: u64, cycle: u
     let db = Arc::new(RwLock::new(DB::new()));
     let mut storage = MerkleStorage::new(db.clone());
     let mut current_cycle = 0_usize;
-    let e = epoch::mib().unwrap();
-    let allocated = stats::allocated::mib().unwrap();
-    let resident = stats::resident::mib().unwrap();
+    //let e = epoch::mib().unwrap();
+    //let allocated = stats::allocated::mib().unwrap();
+    //let resident = stats::resident::mib().unwrap();
 
     for i in 0..blocks_limit {
         let blocks_url = format!("{}/dev/chains/main/blocks?limit={}&from_block_id={}", node, 1, i);
