@@ -342,6 +342,7 @@ impl MerkleStorage {
         Ok(())
     }
 
+    #[inline]
     fn mark_entries_recursively(&self,  entry: &Entry, todo : &mut LinkedHashSet<Vec<u8>>,db: &mut RwLockWriteGuard<MerkleStorageKV>)  {
         if let Ok(k) = &self.hash_entry(entry) {
             match entry {
