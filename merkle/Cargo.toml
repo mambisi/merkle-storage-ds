@@ -23,7 +23,7 @@ serde_json = "1.0"
 patricia_tree = "0.3.0"
 linked_hash_set = { git = "https://github.com/mambisi/linked-hash-set.git" }
 rayon = "1.5.0"
-
+cpuprofiler = "0.0.4"
 [dev-dependencies]
 hex = "0.4"
 maplit = "1.0"

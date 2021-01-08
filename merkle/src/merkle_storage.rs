@@ -66,6 +66,8 @@ use crate::database;
 
 const HASH_LEN: usize = 32;
 
+use cpuprofiler::PROFILER;
+
 pub type ContextKey = Vec<String>;
 pub type ContextValue = Vec<u8>;
 pub type EntryHash = [u8; HASH_LEN];
@@ -317,6 +319,7 @@ impl MerkleStorage {
     }
 
     pub fn gc(&mut self) -> Result<(),MerkleError>{
+        PROFILER.lock().unwrap().start("./merkle-gc-prof.profile").unwrap();
         let instant = Instant::now();
         let db = self.db.clone();
         // Lock write to database
@@ -325,6 +328,7 @@ impl MerkleStorage {
         self.mark_entries(&mut todo, &mut db_writer);
         self.sweep_entries(&mut db_writer,todo);
         self.update_execution_stats("GC".to_string(), None, &instant);
+        PROFILER.lock().unwrap().stop().unwrap();
         Ok(())
     }
 
