@@ -332,7 +332,7 @@ impl MerkleStorage {
         self.update_execution_stats("GC".to_string(), None, &instant);
         match guard.report().build() {
             Ok(report) => {
-                let mut file = File::create("gc-profile.pb").unwrap();
+                let mut file = File::create("./merkle-gc-profile.pb").unwrap();
                 let profile = report.pprof().unwrap();
 
                 let mut content = Vec::new();
