@@ -63,7 +63,7 @@ use std::array::TryFromSliceError;
 use blake2::VarBlake2b;
 use blake2::digest::{Update, VariableOutput};
 use crate::database;
-
+use pprof::protos::*;
 const HASH_LEN: usize = 32;
 
 use cpuprofiler::PROFILER;
