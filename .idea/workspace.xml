@@ -13,9 +13,8 @@
     <cargoProject FILE="$PROJECT_DIR$/merkle/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="use inline functions for mark_entries_recursively">
+    <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="cpu profiler attached">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmark/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/merkle/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
@@ -216,14 +215,7 @@
       <workItem from="1609850175833" duration="1598000" />
       <workItem from="1609944956363" duration="367000" />
       <workItem from="1610008774605" duration="2995000" />
-      <workItem from="1610106545567" duration="1871000" />
-    </task>
-    <task id="LOCAL-00016" summary="node test">
-      <created>1608307329414</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1608307329414</updated>
+      <workItem from="1610106545567" duration="3007000" />
     </task>
     <task id="LOCAL-00017" summary="Ready for test">
       <created>1608325255496</created>
@@ -561,7 +553,14 @@
       <option name="project" value="LOCAL" />
       <updated>1610040401838</updated>
     </task>
-    <option name="localTasksCounter" value="65" />
+    <task id="LOCAL-00065" summary="cpu profiler attached">
+      <created>1610112495579</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1610112495579</updated>
+    </task>
+    <option name="localTasksCounter" value="66" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -586,7 +585,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
-    <MESSAGE value="testing" />
     <MESSAGE value="set limit on block actions" />
     <MESSAGE value="set limit on block actions to 20_000" />
     <MESSAGE value="set limit on block actions to 100_000" />
@@ -611,7 +609,8 @@
     <MESSAGE value="added stats to gc" />
     <MESSAGE value="remove jemalloc" />
     <MESSAGE value="use inline functions for mark_entries_recursively" />
-    <option name="LAST_COMMIT_MESSAGE" value="use inline functions for mark_entries_recursively" />
+    <MESSAGE value="cpu profiler attached" />
+    <option name="LAST_COMMIT_MESSAGE" value="cpu profiler attached" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/merkle_storage_ds$Test_merkle_storage__tests__garbage_test.info" NAME="Test merkle_storage::tests::garbage_test Coverage Results" MODIFIED="1608795966917" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="RsCoverageRunner" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" CONTEXT_FILE_PATH="$PROJECT_DIR$/merkle" />
