@@ -270,14 +270,14 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
     fn retain(&mut self, pred: Vec<Vec<u8>>) -> Result<(), DBError> {
         let garbage_keys: Vec<_> = self.inner.iter().par_bridge().filter_map(|(k, v)| {
             if !pred.contains(&k) {
-                Some(k)
+                Some(k.clone())
             } else {
                 None
             }
         }).collect();
 
         for k in garbage_keys {
-            self.inner.remove(k);
+            self.inner.remove(&k);
         }
         Ok(())
     }
