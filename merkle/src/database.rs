@@ -7,25 +7,29 @@ use std::collections::{HashMap, BTreeMap};
 use crate::db_iterator::{DBIterator, DBIterationHandler};
 use crate::ivec::IVec;
 use serde::{Serialize, Deserialize};
-use patricia_tree::PatriciaMap;
 use rayon::prelude::*;
 
 #[derive(Debug, Default, Clone)]
 pub struct Batch {
-    pub(crate) writes: PatriciaMap<Vec<u8>>,
+    pub(crate) writes: HashMap<IVec, Option<IVec>>,
 }
 
 impl Batch {
     /// Set a key to a new value
-    pub fn insert(&mut self, key: Vec<u8>, value: Vec<u8>)
+    pub fn insert<K, V>(&mut self, key: K, value: V)
+        where
+            K: Into<IVec>,
+            V: Into<IVec>,
     {
-        self.writes.insert(key, value);
+        self.writes.insert(key.into(), Some(value.into()));
     }
 
     /// Remove a key
-    pub fn remove(&mut self, key: Vec<u8>)
+    pub fn remove<K>(&mut self, key: K)
+        where
+            K: Into<IVec>,
     {
-        self.writes.remove(key);
+        self.writes.insert(key.into(), None);
     }
 }
 
@@ -148,7 +152,7 @@ impl<'a, S: KeyValueSchema> Iterator for IteratorWithSchema<'a, S> {
 }
 
 pub struct DB {
-    pub(crate) inner: BTreeMap<Vec<u8>,Vec<u8>>
+    pub(crate) inner: BTreeMap<IVec, IVec>
 }
 
 impl DB {
@@ -173,14 +177,22 @@ impl DB {
 
     pub(crate) fn apply_batch(&mut self, batch: Batch) {
         self.inner.extend(batch.writes.iter().map(|(k, v)| {
-            (k, v.clone())
+            match v {
+                None => {
+                    (k.clone(), IVec::default())
+                }
+                Some(v) => {
+                    (k.clone(), v.clone())
+                }
+            }
         }))
     }
 }
 
 /// Database iterator direction
 pub enum Direction {
-    Forward
+    Forward,
+    Reverse
 }
 
 /// Database iterator with schema mode, from start to end, from end to start or from specific key to end/start
@@ -194,7 +206,7 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
     fn put(&mut self, key: &S::Key, value: &S::Value) -> Result<(), DBError> {
         let key = key.encode()?;
         let value = value.encode()?;
-        self.inner.insert(key, value);
+        self.inner.insert(key.into(), value.into());
         Ok(())
     }
 
@@ -207,14 +219,14 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
     fn merge(&mut self, key: &S::Key, value: &<S as KeyValueSchema>::Value) -> Result<(), DBError> {
         let key = key.encode()?;
         let value = value.encode()?;
-        self.inner.insert(key, value);
+        self.inner.insert(key.into(), value.into());
         Ok(())
     }
 
     fn get(&self, key: &S::Key) -> Result<Option<S::Value>, DBError> {
         let key = key.encode()?;
 
-        match self.inner.get(&key) {
+        match self.inner.get(&IVec::from(key)) {
             Some(v) => {
                 Ok(Some(S::Value::decode(v)?))
             }
@@ -237,6 +249,9 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
                 match direction {
                     Direction::Forward => {
                         self.iter(db_iterator::IteratorMode::From(key.into(), db_iterator::Direction::Forward))
+                    }
+                    Direction::Reverse => {
+                        self.iter(db_iterator::IteratorMode::From(key.into(), db_iterator::Direction::Reverse))
                     }
                 }
             }
@@ -268,8 +283,9 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
     }
 
     fn retain(&mut self, pred: Vec<Vec<u8>>) -> Result<(), DBError> {
-        let garbage_keys: Vec<_> = self.inner.iter().par_bridge().filter_map(|(k, v)| {
-            if !pred.contains(&k) {
+        let garbage_keys: Vec<IVec> = self.inner.par_iter().filter_map(|(k, v)| {
+            //let k = k.clone();
+            if !pred.contains(&k.to_vec()) {
                 Some(k.clone())
             } else {
                 None
@@ -281,8 +297,6 @@ impl<S: KeyValueSchema> KeyValueStoreWithSchema<S> for DB {
         }
         Ok(())
     }
-
-
 
 
     fn get_mem_use_stats(&self) -> Result<DBStats, DBError> {

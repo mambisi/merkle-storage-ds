@@ -332,8 +332,7 @@ impl MerkleStorage {
         match guard.report().build() {
             Ok(report) => {
                 let mut file = File::create("./merkle-gc-profile.pb").unwrap();
-                let profile = report.data;
-
+                let profile = report.pprof().unwrap();
                 let mut content = Vec::new();
                 profile.encode(&mut content).unwrap();
                 file.write_all(&content).unwrap();
