@@ -148,7 +148,7 @@ impl<'a, S: KeyValueSchema> Iterator for IteratorWithSchema<'a, S> {
 }
 
 pub struct DB {
-    pub(crate) inner: PatriciaMap<Vec<u8>>
+    pub(crate) inner: BTreeMap<Vec<u8>,Vec<u8>>
 }
 
 impl DB {
@@ -167,7 +167,7 @@ impl DB {
 impl DB {
     pub fn new() -> Self {
         DB {
-            inner: PatriciaMap::new()
+            inner: BTreeMap::new()
         }
     }
 

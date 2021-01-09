@@ -14,6 +14,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="93017b67-bb36-44f7-9a8e-ecf50ea30d3f" name="Default Changelist" comment="bug fix">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/merkle/src/database.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/database.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" beforeDir="false" afterPath="$PROJECT_DIR$/merkle/src/merkle_storage.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -213,21 +215,8 @@
       <workItem from="1609850175833" duration="1598000" />
       <workItem from="1609944956363" duration="367000" />
       <workItem from="1610008774605" duration="2995000" />
-      <workItem from="1610106545567" duration="3646000" />
-    </task>
-    <task id="LOCAL-00020" summary="Ready for test">
-      <created>1608331637901</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1608331637901</updated>
-    </task>
-    <task id="LOCAL-00021" summary="Ready for test">
-      <created>1608331777522</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1608331777522</updated>
+      <workItem from="1610106545567" duration="5115000" />
+      <workItem from="1610127846447" duration="1000" />
     </task>
     <task id="LOCAL-00022" summary="Ready for test">
       <created>1608333105155</created>
@@ -558,7 +547,21 @@
       <option name="project" value="LOCAL" />
       <updated>1610114844975</updated>
     </task>
-    <option name="localTasksCounter" value="69" />
+    <task id="LOCAL-00069" summary="bug fix">
+      <created>1610115036942</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1610115036942</updated>
+    </task>
+    <task id="LOCAL-00070" summary="bug fix">
+      <created>1610115105344</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1610115105344</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
